@@ -482,7 +482,8 @@ main {
   top: calc(100% + 14px);
   right: 0;
   z-index: 30;
-  width: 224px;
+  width: 274px;
+  max-width: calc(100vw - 24px);
   padding: 16px;
   border: var(--rule) solid var(--ink);
   background: var(--paper);
@@ -524,7 +525,7 @@ main {
 
 .toolbox-links {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 
