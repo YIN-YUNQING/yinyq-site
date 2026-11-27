@@ -1,14 +1,66 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2338bdf8'/><text x='16' y='22' text-anchor='middle' font-size='18' fill='%23070b14' font-weight='bold'>S</text></svg>" />
-    <title>SeamWeaver — Interactive Polymetric Adaptive Music Authoring & Seam Verification</title>
-    <script type="module" crossorigin src="./assets/index-zgmOmuV4.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CkxKCm-o.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SeamStation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231d1f24'/><path d='M8 11h6c5 0 3 10 9 10h1' fill='none' stroke='%23f0a43c' stroke-width='2.4' stroke-linecap='round'/><circle cx='8' cy='11' r='3' fill='%23f0a43c'/><circle cx='24' cy='21' r='3' fill='%2362b0ff'/></svg>">
+<link rel="stylesheet" href="style.css?v=7cf97dd6">
+</head>
+<body>
+<header id="bar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><path d="M7 11h7c5 0 3 10 9 10h2" fill="none" stroke="#f0a43c" stroke-width="2.4" stroke-linecap="round"/><circle cx="7" cy="11" r="3.2" fill="#f0a43c"/><circle cx="25" cy="21" r="3.2" fill="#62b0ff"/></svg>
+    <span>SeamStation</span>
+  </div>
+  <div class="group">
+    <button id="btnStop" class="icon" title="Space"><svg viewBox="0 0 16 16" width="12" height="12"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor"/></svg></button>
+    <label class="field"><span data-t="preroll"></span>
+      <span class="stepper"><button id="preMinus">−</button><b id="preVal">1</b><button id="prePlus">+</button></span>
+      <span data-t="prerollUnit"></span></label>
+    <label class="check"><input type="checkbox" id="loop"><span data-t="loop"></span></label>
+    <label class="field"><span data-t="thickness"></span><input type="range" id="thick" min="0" max="1" step="0.01" value="1"><b id="thickVal">100%</b></label>
+  </div>
+  <div class="group" id="chainBox" hidden>
+    <button id="btnChain" class="primary"><svg viewBox="0 0 16 16" width="11" height="11"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg><span data-t="chain"></span><b id="chainN"></b></button>
+    <button id="btnChainClear" data-t="clear"></button>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <button id="btnUndo" data-t="undo" title="⌘Z"></button>
+    <button id="btnReset" data-t="reset"></button>
+    <button id="btnHelp" data-t="help"></button>
+    <span class="langs" id="langs"></span>
+    <a id="btnSurvey" class="primary ghost" href="survey.html" data-t="survey"></a>
+  </div>
+</header>
+<main id="stage">
+  <canvas id="graph"></canvas>
+  <aside id="legend" hidden><h4 data-t="channels"></h4><ul id="legendList"></ul></aside>
+  <section id="editor" hidden>
+    <div class="edbar">
+      <b id="edName"></b><span id="edMeta" class="dim"></span>
+      <div id="edTracks" class="tabs"></div>
+      <div class="spacer"></div>
+      <label class="check"><input type="checkbox" id="edGhost" checked><span data-t="ghost"></span></label>
+      <button id="edPlay" data-t="playBlock"></button>
+      <button id="edFrom" data-t="playFromSource"></button>
+      <button id="edReset" data-t="resetBlock"></button>
+      <button id="edClose" class="icon" title="Esc">✕</button>
+    </div>
+    <canvas id="roll"></canvas>
+    <div class="edhint dim" data-t="edHint"></div>
+  </section>
+</main>
+<footer id="status">
+  <span id="stPlay"></span>
+  <span id="stLink"></span>
+  <span class="spacer"></span>
+  <span id="stHint" class="dim"></span>
+</footer>
+<div id="toast" hidden></div>
+<div id="help" hidden><div class="card"><h2 data-t="helpTitle"></h2><ol id="helpList"></ol><div class="row"><span class="dim" data-t="dontShow"></span><button id="helpOk" class="primary" data-t="helpOk"></button></div></div></div>
+<script type="module" src="app.js?v=7cf97dd6"></script>
+</body>
 </html>

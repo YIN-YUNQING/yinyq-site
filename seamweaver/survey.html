@@ -1,1072 +1,192 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230284c7'/><text x='16' y='22' text-anchor='middle' font-size='18' fill='%23ffffff' font-weight='bold'>Q</text></svg>" />
-  <title>SeamWeaver 用户测试问卷 / User Study Questionnaire</title>
-  <style>
-    :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --accent: #0284c7;
-      --accent-soft: #e0f2fe;
-      --emerald: #059669;
-      --rose: #e11d48;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 20px 14px 64px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans", "Noto Sans CJK JP", "Inter", sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 820px;
-      margin: 0 auto;
-    }
-    .hero {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #0c4a6e 100%);
-      color: #f8fafc;
-      border-radius: 14px;
-      padding: 22px 24px;
-      margin-bottom: 18px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-    }
-    .hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .kicker {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #7dd3fc;
-    }
-    .lang-bar {
-      display: inline-flex;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 8px;
-      padding: 2px;
-      gap: 2px;
-    }
-    .lang-bar button {
-      border: none;
-      background: transparent;
-      color: #cbd5e1;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .lang-bar button.active {
-      background: #ffffff;
-      color: #0f172a;
-    }
-    .hero h1 {
-      margin: 0 0 6px 0;
-      font-size: 21px;
-      font-weight: 800;
-      line-height: 1.3;
-    }
-    .hero p {
-      margin: 0;
-      font-size: 13px;
-      color: #cbd5e1;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-bottom: 14px;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    }
-    .section-title {
-      font-size: 16px;
-      font-weight: 800;
-      margin: 0 0 4px 0;
-      color: #0f172a;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: #0369a1;
-    }
-    .section-sub {
-      margin: 0 0 14px 0;
-      font-size: 12.5px;
-      color: var(--muted);
-    }
-    .field {
-      margin-bottom: 14px;
-    }
-    .field:last-child { margin-bottom: 0; }
-    .field-label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 6px;
-      font-size: 13.5px;
-      color: #0f172a;
-    }
-    .req { color: var(--rose); margin-left: 3px; }
-    .row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    input[type="text"], input[type="number"], textarea, select {
-      width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 9px 11px;
-      font-size: 13.5px;
-      font-family: inherit;
-      color: var(--text);
-      background: #ffffff;
-      transition: border-color 0.12s ease, box-shadow 0.12s ease;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
-    }
-    textarea {
-      min-height: 76px;
-      resize: vertical;
-    }
-    .check-grid, .radio-stack {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .radio-stack {
-      flex-direction: column;
-    }
-    .opt-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 7px 11px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      background: #ffffff;
-      transition: all 0.1s ease;
-    }
-    .opt-pill:hover { border-color: var(--accent); background: #f8fafc; }
-    .opt-pill input { accent-color: var(--accent); margin: 0; }
-
-    /* Likert 7-point items */
-    .likert-item {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      background: #fcfdff;
-    }
-    .likert-item.missing {
-      border-color: var(--rose);
-      background: #fff1f2;
-    }
-    .likert-q {
-      font-weight: 600;
-      font-size: 13.5px;
-      margin-bottom: 10px;
-      color: #0f172a;
-    }
-    .likert-num {
-      display: inline-block;
-      min-width: 30px;
-      font-weight: 800;
-      color: var(--accent);
-    }
-    .likert-row {
-      display: grid;
-      grid-template-columns: auto repeat(7, 1fr) auto;
-      align-items: center;
-      gap: 6px;
-    }
-    .likert-end {
-      font-size: 11px;
-      color: var(--muted);
-      max-width: 82px;
-      line-height: 1.25;
-    }
-    .likert-end.right { text-align: right; }
-    .likert-btn {
-      position: relative;
-      display: flex;
-      justify-content: center;
-    }
-    .likert-btn input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-    .likert-btn span {
-      width: 100%;
-      max-width: 44px;
-      height: 36px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      background: #ffffff;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 13px;
-      color: #334155;
-      cursor: pointer;
-      transition: all 0.1s ease;
-    }
-    .likert-btn span:hover {
-      border-color: var(--accent);
-      background: #f0f9ff;
-    }
-    .likert-btn input:checked + span {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
-    }
-
-    .consent-box {
-      background: #f0f9ff;
-      border: 1px solid #bae6fd;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 13px;
-      color: #0c4a6e;
-    }
-    .consent-check {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      margin-top: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .submit-panel {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 18px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-    .btn {
-      border: 1px solid #cbd5e1;
-      border-radius: 9px;
-      padding: 10px 16px;
-      font-size: 13.5px;
-      font-weight: 700;
-      cursor: pointer;
-      background: #ffffff;
-      color: #0f172a;
-      transition: all 0.12s ease;
-    }
-    .btn:hover { background: #f1f5f9; }
-    .btn-primary {
-      background: linear-gradient(135deg, #0284c7, #4f46e5);
-      border-color: transparent;
-      color: #ffffff;
-    }
-    .btn-primary:hover { filter: brightness(1.06); }
-    .btn-green {
-      background: var(--emerald);
-      border-color: transparent;
-      color: #ffffff;
-    }
-    .toast {
-      display: none;
-      padding: 10px 13px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .toast.ok { display: block; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
-    .toast.err { display: block; background: #fff1f2; border: 1px solid #fda4af; color: #9f1239; }
-
-    .preview-box {
-      display: none;
-      background: #0f172a;
-      color: #e2e8f0;
-      border-radius: 8px;
-      padding: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11.5px;
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 220px;
-      overflow: auto;
-    }
-
-    @media (max-width: 640px) {
-      .row-2 { grid-template-columns: 1fr; }
-      .likert-row { grid-template-columns: repeat(7, 1fr); gap: 4px; }
-      .likert-end { grid-column: span 7; max-width: none; }
-      .likert-end.right { text-align: right; }
-    }
-
-    body.embed-mode {
-      padding: 12px 12px 44px;
-      font-size: 13px;
-      background: #f1f5f9;
-    }
-    body.embed-mode .container {
-      max-width: 100%;
-    }
-    body.embed-mode .hero {
-      padding: 14px 16px;
-      margin-bottom: 12px;
-      border-radius: 10px;
-    }
-    body.embed-mode .hero h1 { font-size: 17px; }
-    body.embed-mode .hero p { font-size: 12px; }
-    body.embed-mode .card {
-      padding: 13px 14px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-    }
-    body.embed-mode .section-title { font-size: 14.5px; }
-    body.embed-mode .row-2 { grid-template-columns: 1fr; gap: 10px; }
-    body.embed-mode .likert-item { padding: 10px 11px; margin-bottom: 8px; }
-    body.embed-mode .likert-q { font-size: 12.8px; margin-bottom: 8px; }
-    body.embed-mode .likert-row { grid-template-columns: repeat(7, 1fr); gap: 4px; }
-    body.embed-mode .likert-end { grid-column: span 7; max-width: none; font-size: 10.5px; }
-    body.embed-mode .likert-end.right { text-align: right; }
-    body.embed-mode .likert-btn span { height: 32px; font-size: 12px; }
-    body.embed-mode .btn { padding: 8px 12px; font-size: 12.5px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SeamStation · 任务与问卷</title>
+<link rel="stylesheet" href="style.css?v=7cf97dd6">
+<style>
+  html, body { overflow: auto; height: auto; }
+  body { background: var(--bg); }
+  .top { position: sticky; top: 0; z-index: 2; height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .top b { font-size: 14px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 26px 18px 80px; }
+  h1 { font-size: 22px; margin: 6px 0 6px; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 16px; }
+  section > p.dim { margin: 0 0 14px; font-size: 12.5px; line-height: 1.6; }
+  .q { padding: 12px 0; border-top: 1px solid var(--line); }
+  .q:first-of-type { border-top: 0; }
+  .q > label, .q > .lab { display: block; margin-bottom: 8px; line-height: 1.55; }
+  .q .num { color: var(--accent); font-weight: 600; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  textarea, input[type=text], input[type=number], select { width: 100%; background: #16171b; border: 1px solid var(--line2); border-radius: 8px; color: var(--text); padding: 8px 10px; font: inherit; }
+  textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
+  textarea:focus, input:focus, select:focus { outline: 2px solid rgba(240,164,60,.5); outline-offset: 0; border-color: transparent; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opts label { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line2); border-radius: 8px; cursor: pointer; background: var(--panel2); }
+  .opts input { accent-color: var(--accent); margin: 0; }
+  .scale { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); }
+  .scale .opts label { width: 34px; justify-content: center; padding: 5px 0; }
+  .scale .opts label:has(input:checked) { background: var(--accent); color: #1b1405; border-color: transparent; font-weight: 600; }
+  .scale .opts input { display: none; }
+  .task { background: #191a1e; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+  .task h3 { margin: 0 0 4px; font-size: 13.5px; }
+  .task p { margin: 0 0 10px; color: #cfd3da; line-height: 1.6; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .warn { color: var(--accent); }
+  #done { margin-top: 12px; line-height: 1.6; }
+</style>
 </head>
 <body>
-<div class="container">
-  <header class="hero">
-    <div class="hero-top">
-      <div class="kicker">SeamWeaver v0.5 · ACM UIST 2027 User Study</div>
-      <div class="lang-bar">
-        <button type="button" data-lang="zh" class="active">中文</button>
-        <button type="button" data-lang="ja">日本語</button>
-        <button type="button" data-lang="en">English</button>
-      </div>
-    </div>
-    <h1 id="t-title"></h1>
-    <p id="t-subtitle"></p>
-  </header>
-
-  <form id="surveyForm" novalidate>
-    <!-- Consent -->
-    <div class="card">
-      <div class="consent-box">
-        <div id="t-consentText"></div>
-        <label class="consent-check">
-          <input type="checkbox" id="consent" name="consent" required />
-          <span id="t-consentAgree"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Part A: Background -->
-    <div class="card">
-      <h2 class="section-title"><span class="section-badge">Part A</span> <span id="t-partA"></span></h2>
-      <p class="section-sub" id="t-partASub"></p>
-
-      <div class="row-2">
-        <div class="field">
-          <label class="field-label" for="pid"><span id="t-pid"></span><span class="req">*</span></label>
-          <input type="text" id="pid" name="pid" placeholder="P01" required />
-        </div>
-        <div class="field">
-          <label class="field-label" for="years"><span id="t-years"></span><span class="req">*</span></label>
-          <input type="number" id="years" name="years" min="0" max="50" step="0.5" placeholder="3" required />
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="role"><span id="t-role"></span><span class="req">*</span></label>
-        <input type="text" id="role" name="role" required />
-      </div>
-
-      <div class="field">
-        <span class="field-label" id="t-daws"></span>
-        <div class="check-grid" id="dawGrid"></div>
-      </div>
-
-      <div class="row-2">
-        <div class="field">
-          <label class="field-label" for="middleware"><span id="t-middleware"></span><span class="req">*</span></label>
-          <select id="middleware" name="middleware" required></select>
-        </div>
-        <div class="field">
-          <label class="field-label" for="oddMeterExp"><span id="t-oddMeter"></span><span class="req">*</span></label>
-          <select id="oddMeterExp" name="oddMeterExp" required></select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="device"><span id="t-device"></span></label>
-        <input type="text" id="device" name="device" />
-      </div>
-    </div>
-
-    <!-- Part B: 10 Likert Questions -->
-    <div class="card">
-      <h2 class="section-title"><span class="section-badge">Part B</span> <span id="t-partB"></span></h2>
-      <p class="section-sub" id="t-partBSub"></p>
-      <div id="likertContainer"></div>
-    </div>
-
-    <!-- Part C: 3 Aesthetic & Workflow Preference Choices -->
-    <div class="card">
-      <h2 class="section-title"><span class="section-badge">Part C</span> <span id="t-partC"></span></h2>
-      <p class="section-sub" id="t-partCSub"></p>
-
-      <div class="field">
-        <span class="field-label"><span id="t-prefA"></span><span class="req">*</span></span>
-        <div class="radio-stack" id="prefAGroup"></div>
-      </div>
-      <div class="field">
-        <label class="field-label" for="prefAReason" id="t-prefAReason"></label>
-        <input type="text" id="prefAReason" name="prefAReason" />
-      </div>
-
-      <div class="field">
-        <span class="field-label"><span id="t-prefB"></span><span class="req">*</span></span>
-        <div class="radio-stack" id="prefBGroup"></div>
-      </div>
-
-      <div class="field">
-        <span class="field-label"><span id="t-prefC"></span><span class="req">*</span></span>
-        <div class="radio-stack" id="prefCGroup"></div>
-      </div>
-    </div>
-
-    <!-- Part D: 6 Open-Ended Interview / Feedback Questions -->
-    <div class="card">
-      <h2 class="section-title"><span class="section-badge">Part D</span> <span id="t-partD"></span></h2>
-      <p class="section-sub" id="t-partDSub"></p>
-      <div id="openContainer"></div>
-    </div>
-
-    <!-- Submit & Export -->
-    <div class="submit-panel">
-      <div id="toast" class="toast"></div>
-      <div class="btn-row">
-        <button type="submit" class="btn btn-primary" id="t-btnDownloadCsv"></button>
-        <button type="button" class="btn btn-green" id="btnCopy"></button>
-        <button type="button" class="btn" id="btnDownloadJson"></button>
-        <button type="button" class="btn" id="btnReset" style="margin-left:auto;"></button>
-      </div>
-      <div id="t-exportHint" style="font-size:12px; color: var(--muted);"></div>
-      <pre id="previewBox" class="preview-box"></pre>
-    </div>
-  </form>
+<div class="top">
+  <a class="primary ghost" id="back" href="index.html"></a>
+  <b id="ttl"></b>
+  <span class="spacer"></span>
+  <span class="langs" id="langs"></span>
 </div>
-
-<script>
-// Optional: if hosted online with a Formspree / Google Apps Script webhook, paste URL here:
-const OPTIONAL_WEBHOOK_URL = "";
-
-const I18N = {
+<div class="wrap" id="root"></div>
+<script type="module">
+// 任务与问卷。答案自动暂存在这台浏览器里；提交 = 下载一个 JSON 文件（含答案、操作记录、你做的修改），再发给研究者。
+// 注意：任务内容、知情同意的文字、联系方式都还是草稿，正式施测前要由研究者定稿。SUS 的中文 / 日文是自译，正式使用应换成已验证的译本。
+const L = {
   zh: {
-    title: "SeamWeaver 多拍号自适应游戏音乐工具 · 测试反馈问卷",
-    subtitle: "请先完成 Web 工具体验（任务 T1–T4），随后如实填写以下问题（约 6–8 分钟）。所有回答仅用于学术研究并完全匿名处理。",
-    consentText: "【知情同意说明】本研究面向 ACM UIST 2027 学术投稿，旨在评估交互式多拍号自适应游戏音乐创作工具的可用性与音乐美学权衡。您的回答将以匿名编号（如 P01）保存，绝不公开个人身份信息，您可随时退出测试。",
-    consentAgree: "我已了解上述说明，自愿参与本次匿名测试。",
-    partA: "测试者背景信息",
-    partASub: "用于统计专业训练背景与音频工具经验。",
-    pid: "匿名编号 / 昵称代号（如 P01）",
-    years: "作曲 / 编曲 / 音响设计年限（年）",
-    role: "当前专业方向 / 身份（如：洗足音大 作曲音响设计研一 / 游戏配乐师）",
-    rolePh: "例：作曲音响设计硕士在读 / 影视游戏配乐",
-    daws: "平时使用的 DAW / 制谱软件（可多选）",
-    middleware: "游戏音频中间件经验（Wwise / FMOD / CRI ADX2 等）",
-    mwOpts: ["请选择…", "无使用经验", "课程练习 / 初步了解", "实际项目 / 熟练使用"],
-    oddMeter: "自适应音乐过渡 / 不等分拍号（5/4、8/8 等）写作经验",
-    oddOpts: ["请选择…", "无经验", "偶尔尝试过", "经常编写"],
-    device: "本次测试监听设备（如：有线监听耳机 / AirPods / 音箱）",
-    devicePh: "例：SONY MDR-CD900ST 有线耳机",
-    partB: "工具体验与听感定量评分（7 点量表）",
-    partBSub: "1 = 非常不同意，4 = 中立，7 = 非常同意。请根据刚才实际操作与试听的真实感受评分。",
-    lowEnd: "非常不同意",
-    highEnd: "非常同意",
-    likert: [
-      { id: "Q1_matrix_speed", code: "Q1", text: "400 格热力图矩阵让我比传统 DAW / 中间件更快发现隐藏的旋律大跳与八度过冲。" },
-      { id: "Q2_matrix_clarity", code: "Q2", text: "热力图上的颜色分级、蓝点（变拍改尾音）与金星（手动锁定）清晰易懂，不会造成信息过载。" },
-      { id: "Q3_hybrid_control", code: "Q3", text: "“仅实时计算开头两音 + 保留作曲家固定模板”的混合方式，让我保有足够的作曲控制权。" },
-      { id: "Q4_pin_and_nudge", code: "Q4", text: "在全局规则（如 Minimax）基础上叠加单格手动 Pin 锁定与来源音高微调，非常贴合作曲习惯。" },
-      { id: "Q5_verovio_cursor", code: "Q5", text: "Verovio 实时五线谱与同步蓝色播放光标，对判断声部进行与节奏重音帮助很大。" },
-      { id: "Q6_cross_spatial", code: "Q6", text: "主题曲跨区变拍页（320 种）与 21 房空间地图联动，帮我理解关卡动线如何触发音乐变化。" },
-      { id: "Q7_minimax_audio", code: "Q7", text: "听觉上，Balanced-Minimax 在高跳案例中明显比原版 Goal-First 更自然顺滑。" },
-      { id: "Q8_preview_timbre", code: "Q8", text: "开启目标曲预告音色（boom / lowPulse / harp / toll / spiral）能有效缓解接缝处的突兀感。" },
-      { id: "Q9_cost_reduction", code: "Q9", text: "这套工具降低了制作与维护多拍号自适应游戏配乐的试错成本。" },
-      { id: "Q10_adoption", code: "Q10", text: "如果未来支持直接导入我的 DAW 工程并导出到游戏引擎，我愿意在实际作品中使用它。" }
+    title: '任务与问卷', back: '← 回到工作站', intro: '感谢参加。整个过程大约 30–40 分钟：先在工作站里完成几个小任务，再回答下面的问题。你的答案会自动暂存，刷新不会丢。',
+    consentH: '参加说明', consentP: '本研究考察一个给作曲者使用的"音乐切换"编辑工具。我们会记录：你在本页填写的答案、你在工作站里的操作（点了什么、什么时候点的）、你对连线和音符做的修改。不记录姓名、录音或屏幕画面。你可以随时停止，不需要说明理由。【研究者姓名、所属与联系方式：待填写】',
+    consent: '我已阅读上面的说明，自愿参加，并同意按上述方式使用我的数据。', code: '参与者编号（自动生成，请不要改成姓名）',
+    bgH: '关于你', role: '你的身份（可多选）', roles: ['作曲', '编曲', '音响 / 声音设计', '游戏开发', '学生', '其他'],
+    years: '作曲或编曲的年数', game: '游戏音乐方面的经验', games: ['没有', '学习过或自己尝试过', '参与过实际项目'],
+    tools: '用过的工具（可多选）', toolList: ['Cubase / Logic / Live 等 DAW', 'Wwise', 'FMOD', '其他游戏音频中间件', '游戏引擎自带的音频功能', '都没用过'],
+    fam: '你对"随玩家行动切换的音乐"（互动音乐）有多熟悉？', famLo: '完全不了解', famHi: '非常熟悉',
+    taskH: '任务', taskP: '请在另一个标签页打开工作站，依次完成。做不出来也没关系，照实填写即可。',
+    tasks: [
+      ['试听一次切换', '找到"主题曲 4/4"第 6 小节切到《摇篮曲》的那条连线，试听它。'],
+      ['比较两次切换', '在"主题曲 3/4"里任选两个不同的小节，分别试听它们切到《星形舞曲》的效果。哪一个你觉得更顺？请在下面写下小节号和理由。'],
+      ['修改一个过渡', '选一个你觉得不够顺的过渡小节（接口），打开它的钢琴卷帘，把旋律改到你满意为止。请写下你改了哪一个、怎么改的。'],
+      ['排一条路径', '排出这样一条路径并连播：从"主题曲 4/4"换到另一个区域的主题曲，再从那里开战。'],
+      ['改一条连线', '新建一条原来没有的连线，试听它；然后删掉它。'],
     ],
-    partC: "三项核心美学与工作流偏好（单选）",
-    partCSub: "直接对应论文中的三大设计取舍，请按您作为创作者/听众的真实直觉选择。",
-    prefA: "偏好 A（小节线同音取舍）：在《蔷薇帕凡》5/4 第 1 小节等案例中，您更偏好哪种方案？",
-    prefAOpts: [
-      { v: "balanced-minimax", l: "Balanced-Minimax（坚持跨小节线同音延续，接受残留的 8 半音跳进）" },
-      { v: "free-2note", l: "Free-2Note（允许小节线处走 1–5 半音小步，换取整条桥段零大跳）" },
-      { v: "depends", l: "视曲目风格与戏剧张力而定（请在下方简述理由）" }
-    ],
-    prefAReason: "（选填）您选择偏好 A 的音乐理由：",
-    prefAReasonPh: "例：抒情段落更想要平滑声部，战斗切入时大跳反而有冲击力…",
-    prefB: "偏好 B（跨区切速行为）：在主题曲 4/4 (♩132) → 8/8 (♪168) 切换时，您更偏好？",
-    prefBOpts: [
-      { v: "barline-snap", l: "小节线精确切速（保持当前小节速度不变，过小节线瞬间切换）" },
-      { v: "room-entry-glide", l: "进房即刻滑速（进入新房间瞬间就开始平滑变速）" },
-      { v: "no-diff", l: "听不出明显差异 / 均可接受" }
-    ],
-    prefC: "偏好 C（日常调试首选视图）：日常检查与修改接缝时，您最倾向使用？",
-    prefCOpts: [
-      { v: "score", l: "实时五线谱（含同步播放标）" },
-      { v: "split", l: "五线谱 + 钢琴卷帘双视图" },
-      { v: "roll", l: "仅钢琴卷帘（含半音音程弧线）" }
-    ],
-    partD: "开放反馈与深度问题（诚实吐槽最有价值！）",
-    partDSub: "哪怕只写一两句话也非常宝贵，真实缺点与争议对我们迭代工具和写论文帮助最大。",
-    openQs: [
-      { id: "F1_pain", label: "F1. 您平时在 DAW + Wwise/FMOD 中做“探索→战斗过渡”或“多拍号主题变体”时，最头疼/最耗时的环节是什么？", ph: "例：改了一个小节的旋律后，所有过渡段都要重新核对…" },
-      { id: "F2_best", label: "F2. 本次体验中，哪一个功能或瞬间最让您觉得“确实帮到了作曲家”？", ph: "例：一键按 1/2/3/4 听觉对比、热力图扫出 24 个八度、五线谱同步播放标…" },
-      { id: "F3_control", label: "F3. 关于“算法只算开头两音 + 其余模板由作曲家定型 + 单格可 Pin 锁定”的控制权划分，您觉得合适吗？还有哪些维度（和声/贝斯/配器）希望自动化或绝不能自动化？", ph: "请谈谈您作为创作者的底线与期待…" },
-      { id: "F4_notation", label: "F4. 对目前的实时五线谱排版（等音升降号拼写、播放标对齐、拍号显示）与钢琴卷帘，有哪些不够顺眼或可以改进的地方？", ph: "例：某些小节的临时升降号、希望直接在五线谱上拖拽改音…" },
-      { id: "F5_next_feature", label: "F5. 如果下一版只增加 1–2 个功能让它真正能进您的实际作品，您最希望加什么？", ph: "例：自定义目标 Boss 曲过渡模板、直接同步进 Unity 试玩、多声部对位检查…" },
-      { id: "F6_cross_meter", label: "F6. 对 21 房空间地图联动 320 种跨区变拍，以及 3/4、5/4、8/8、13/8 四种主题变形的听感，您有什么评价或建议？", ph: "例：哪种拍号变形最保住原曲辨识度？和策划沟通关卡时有没有用？" }
-    ],
-    btnDownloadCsv: "提交并下载 CSV 结果文件",
-    btnCopy: "一键复制文本结果（发微信/LINE）",
-    btnDownloadJson: "下载完整 JSON",
-    btnReset: "清空重填",
-    exportHint: "提示：点击“提交并下载 CSV”后，请将下载的文件直接发给测试组织者（或点“一键复制”直接粘贴发送）。表单会自动暂存您的进度，刷新不丢失。",
-    errConsent: "请先勾选顶部的知情同意框。",
-    errRequired: "还有必填项未完成（已用红框标出），请补充后再提交。",
-    okCsv: "已导出 CSV 文件！非常感谢您的宝贵反馈，请将该文件发回给研究者。",
-    okCopy: "已复制到剪贴板！您可以直接粘贴发给研究者（LINE / 微信 / 邮件）。",
-    okJson: "已导出完整 JSON 文件！",
-    confirmReset: "确定要清空当前已填写的所有内容吗？"
+    st: '完成情况', sts: ['完成了', '完成了一部分', '没能完成'], diff: '难度', diffLo: '很容易', diffHi: '很难', note: '补充说明（做法、卡在哪里、你的判断）',
+    susH: '使用感受', susP: '下面 10 句话，请按你的同意程度选择。1 = 完全不同意，5 = 完全同意。',
+    sus: ['我想我会愿意经常使用这个系统。', '我觉得这个系统没必要这么复杂。', '我觉得这个系统容易使用。', '我想我需要专业人员的帮助才能使用这个系统。', '我觉得这个系统的各项功能整合得很好。', '我觉得这个系统里不一致的地方太多。', '我想大多数人能很快学会使用这个系统。', '我觉得这个系统用起来很笨重。', '使用这个系统时我很有把握。', '在能上手之前，我需要先学很多东西。'],
+    openH: '开放问题',
+    open: ['使用过程中，哪些地方对你有用？请具体说明。', '哪些地方让你困惑，或者妨碍了你想做的事？', '和你现在处理类似工作的方式相比，有哪些不同？', '如果要在真实项目里使用，它还缺什么？', '其他想说的。'],
+    submitH: '提交', submitP: '点击下载后，请把下载的文件发给研究者。文件里包含：你的答案、你在工作站里的操作记录、你做的修改。',
+    dl: '下载结果文件', copy: '复制为文本', clear: '清空重填', need: '请先勾选"同意参加"。', done: '已下载。请把这个文件发给研究者，谢谢。', copied: '已复制到剪贴板。', sure: '清空所有答案？',
+    logInfo: '已记录的操作：{n} 条',
   },
   ja: {
-    title: "SeamWeaver 変拍子アダプティブゲーム音楽ツール・評価アンケート",
-    subtitle: "Webツール（タスク T1–T4）を体験した上で、率直なご回答をお願いいたします（所要約6〜8分）。回答はすべて匿名で学術研究（ACM UIST 2027）のみに使用します。",
-    consentText: "【研究参加への同意】本研究はACM UIST 2027への投稿を目的とし、変拍子アダプティブゲーム音楽制作支援ツールの有用性と音楽的トレードオフを評価するものです。回答は匿名ID（例：P01）で管理され、個人を特定する情報は一切公開されません。参加は任意であり、いつでも中断できます。",
-    consentAgree: "上記の内容を理解し、匿名の評価テストに参加することに同意します。",
-    partA: "回答者プロフィール",
-    partASub: "作曲・サウンド制作の経験背景を把握するための項目です。",
-    pid: "匿名ID / ニックネーム記号（例：P01）",
-    years: "作曲・編曲・サウンド制作歴（年）",
-    role: "現在の専攻・立場（例：洗足音大 作曲音響デザイン 修士1年 / ゲーム作曲家）",
-    rolePh: "例：作曲音響デザイン・ゲームゼミ 修士1年",
-    daws: "普段使用している DAW・浄書ソフト（複数選択可）",
-    middleware: "ゲームオーディオミドルウェア経験（Wwise / FMOD / CRI ADX2 等）",
-    mwOpts: ["選択してください…", "使用経験なし", "授業・練習レベル", "実制作・プロジェクトで使用"],
-    oddMeter: "アダプティブ遷移や変拍子（5/4、8/8等）の作曲経験",
-    oddOpts: ["選択してください…", "経験なし", "ときどきある", "よくある"],
-    device: "今回の試聴環境（有線ヘッドホン / ワイヤレス / モニタースピーカー等）",
-    devicePh: "例：SONY MDR-CD900ST 有線ヘッドホン",
-    partB: "ツール体験・聴感評価（7段階リッカート尺度）",
-    partBSub: "1 = 全くそう思わない、4 = どちらでもない、7 = 強くそう思う",
-    lowEnd: "全くそう思わない",
-    highEnd: "強くそう思う",
-    likert: [
-      { id: "Q1_matrix_speed", code: "Q1", text: "400シームのヒートマップ行列により、従来のDAWやミドルウェアより遥かに速く隠れた大跳躍やオクターブ跳躍を発見できた。" },
-      { id: "Q2_matrix_clarity", code: "Q2", text: "ヒートマップの色分け、青点（拍子変化による末尾音変化）、金星（ピン留め）の意味は直感的で分かりやすかった。" },
-      { id: "Q3_hybrid_control", code: "Q3", text: "「冒頭2音のみ動的計算し、残りは作曲家の固定テンプレートを保つ」ハイブリッド方式は、作曲家の制御権を十分に維持できる。" },
-      { id: "Q4_pin_and_nudge", code: "Q4", text: "全体ルール（Minimax等）に個別の手動ピン留めや遷移元音高の微調整を組み合わせられる点は、作曲ワークフローによく合致している。" },
-      { id: "Q5_verovio_cursor", code: "Q5", text: "Verovioによるリアルタイム五線譜と同期再生カーソルは、声部進行や拍節アクセントの確認に非常に役立った。" },
-      { id: "Q6_cross_spatial", code: "Q6", text: "エリア間拍子遷移ビュー（320種）と21部屋の空間マップの連動により、レベル構造と音楽変化の関係が把握しやすかった。" },
-      { id: "Q7_minimax_audio", code: "Q7", text: "聴感上、大跳躍ケースにおいて Balanced-Minimax は従来の Goal-First より明らかに自然で滑らかに聞こえた。" },
-      { id: "Q8_preview_timbre", code: "Q8", text: "遷移先の予告音色キュー（boom / lowPulse / harp / toll / spiral）を有効にすると、つなぎ目の唐突さや違和感が和らぐと感じた。" },
-      { id: "Q9_cost_reduction", code: "Q9", text: "本ツールは変拍子アダプティブゲーム音楽の試行錯誤や保守コストを大きく削減できると思う。" },
-      { id: "Q10_adoption", code: "Q10", text: "自分のDAW（Cubase等）からのMIDI取込やゲームエンジン連携がさらに整えば、実際の作品制作で使ってみたい。" }
+    title: '課題とアンケート', back: '← ワークステーションに戻る', intro: 'ご参加ありがとうございます。所要時間は 30〜40 分ほどです。まずワークステーションでいくつかの課題を行い、そのあと下の質問にお答えください。回答は自動的に一時保存され、再読み込みしても消えません。',
+    consentH: '参加にあたって', consentP: '本研究は、作曲者向けの「音楽の切り替え」編集ツールを調べるものです。記録するのは、このページの回答、ワークステーションでの操作（何をいつクリックしたか）、接続や音符に加えた変更です。氏名、録音、画面の映像は記録しません。いつでも理由を述べずに中止できます。【研究者の氏名・所属・連絡先：未記入】',
+    consent: '上の説明を読み、自分の意思で参加し、上記のとおりデータが使われることに同意します。', code: '参加者番号（自動生成。氏名に書き換えないでください）',
+    bgH: 'あなたについて', role: '立場（複数選択可）', roles: ['作曲', '編曲', '音響・サウンドデザイン', 'ゲーム開発', '学生', 'その他'],
+    years: '作曲・編曲の経験年数', game: 'ゲーム音楽の経験', games: ['ない', '学んだ、または自分で試したことがある', '実際のプロジェクトに参加したことがある'],
+    tools: '使ったことのあるツール（複数選択可）', toolList: ['Cubase / Logic / Live などの DAW', 'Wwise', 'FMOD', 'その他のゲームオーディオ・ミドルウェア', 'ゲームエンジン標準のオーディオ機能', 'どれも使ったことがない'],
+    fam: '「プレイヤーの行動に応じて切り替わる音楽」（インタラクティブ音楽）にどのくらい馴染みがありますか。', famLo: 'まったく知らない', famHi: 'よく知っている',
+    taskH: '課題', taskP: '別のタブでワークステーションを開き、順に行ってください。できなくても構いません。そのとおりに記入してください。',
+    tasks: [
+      ['切り替えを 1 つ試聴する', '「テーマ曲 4/4」の第 6 小節から《子守歌》へ切り替わる接続を見つけて、試聴してください。'],
+      ['2 つの切り替えを比べる', '「テーマ曲 3/4」から異なる小節を 2 つ選び、それぞれ《星形の舞曲》へ切り替わる様子を試聴してください。どちらが自然に聞こえましたか。小節番号と理由を下に書いてください。'],
+      ['つなぎを 1 つ直す', '自然でないと感じたつなぎの小節（ブリッジ）を 1 つ選び、ピアノロールを開いて、納得がいくまで旋律を直してください。どれをどう直したかを書いてください。'],
+      ['経路を組む', '次のような経路を組んで連続再生してください：「テーマ曲 4/4」から別のエリアのテーマ曲へ移り、そこから戦闘を開始する。'],
+      ['接続を変更する', 'もともと無かった接続を 1 つ新しく作り、試聴してください。そのあと削除してください。'],
     ],
-    partC: "音楽的美学・ワークフローに関する3つの選択",
-    partCSub: "論文の核心となる3つの設計トレードオフについて、作曲家・聴き手としての率直な好みを選んでください。",
-    prefA: "選択 A（小節線同音のトレードオフ）：『薔薇のパヴァーヌ』5/4 第1小節などで、どちらを好みますか？",
-    prefAOpts: [
-      { v: "balanced-minimax", l: "Balanced-Minimax（小節線での同音維持を優先し、8半音の跳躍を許容する）" },
-      { v: "free-2note", l: "Free-2Note（小節線で小さな順次進行を許し、ブリッジ全体の大跳躍をゼロにする）" },
-      { v: "depends", l: "曲調や演出意図による（下に理由をご記入ください）" }
-    ],
-    prefAReason: "（任意）選択 A を選んだ音楽的な理由：",
-    prefAReasonPh: "例：叙情的な場面は滑らかさ優先、戦闘突入は跳躍のインパクトも欲しい等",
-    prefB: "選択 B（エリア間テンポ切替）：4/4 (♩132) → 8/8 (♪168) の遷移ではどちらが自然ですか？",
-    prefBOpts: [
-      { v: "barline-snap", l: "小節線で厳密にテンポ切替（現小節は元テンポを維持し、小節線で切替）" },
-      { v: "room-entry-glide", l: "入室直後からテンポグライド（部屋移動と同時に滑らかに変化開始）" },
-      { v: "no-diff", l: "大きな違いを感じない／どちらでもよい" }
-    ],
-    prefC: "選択 C（普段使いしたいメインビュー）：遷移シームの確認・編集で最も使いやすい表示は？",
-    prefCOpts: [
-      { v: "score", l: "リアルタイム五線譜（同期カーソル付き）" },
-      { v: "split", l: "五線譜＋ピアノロールの併記" },
-      { v: "roll", l: "ピアノロールのみ（音程アーク付き）" }
-    ],
-    partD: "自由記述・インタビュー質問（率直な改善点が一番助かります！）",
-    partDSub: "短い一言でも大変貴重です。違和感や「ここが足りない」というご意見ほど研究価値が高まります。",
-    openQs: [
-      { id: "F1_pain", label: "F1. 普段 DAW や Wwise/FMOD で「探索→戦闘の遷移」や「変拍子展開」を作る際、一番手間がかかる点や破綻しやすい箇所はどこですか？", ph: "例：メロディを1小節直すだけで全遷移パターンを再確認する必要がある…" },
-      { id: "F2_best", label: "F2. 今回の体験で「これは作曲家にとって本当に助かる」と感じた機能や瞬間はどれでしたか？", ph: "例：1/2/3/4キーでの即時聴き比べ、ヒートマップで24箇所のオクターブ跳躍が一目で分かった点…" },
-      { id: "F3_control", label: "F3. 「冒頭2音のみ動的計算＋残りは作曲家テンプレート＋個別ピン留め」という自動化と制御権の境界線をどう評価しますか？和声・ベース・編曲はどこまで任せてよいですか？", ph: "作曲家として譲れない領域や、自動化してほしい領域をご記入ください…" },
-      { id: "F4_notation", label: "F4. 五線譜（異名同音・臨時記号・再生カーソル同期・拍子表記）とピアノロールについて、見づらい点や改善したい点はありましたか？", ph: "例：一部の臨時記号表記、五線譜上で直接音符をドラッグ編集したい…" },
-      { id: "F5_next_feature", label: "F5. 次期バージョンで1〜2個だけ機能を追加して実制作に導入するとしたら、真っ先に何が欲しいですか？", ph: "例：遷移先テンプレートの直接編集、Unity実機ホットリロード、複数声部の対位法チェック…" },
-      { id: "F6_cross_meter", label: "F6. 21部屋のマップ構造と320種のエリア間拍子遷移の連動、および 3/4・5/4・8/8・13/8 変形の聴感についてご感想をお聞かせください。", ph: "例：レベルデザイナーとの意思疎通に役立ちそうか、どの拍子変形が一番自然だったか…" }
-    ],
-    btnDownloadCsv: "回答をCSVで保存（提出用）",
-    btnCopy: "テキストをコピー（LINE/メール送付用）",
-    btnDownloadJson: "JSON形式で保存",
-    btnReset: "入力をリセット",
-    exportHint: "ヒント：「CSVで保存」したファイルを研究者へお送りいただくか、「テキストをコピー」してLINE・メール等にそのまま貼り付けてお送りください。入力内容はブラウザに自動保存されます。",
-    errConsent: "まず冒頭の研究参加同意チェックボックスにチェックを入れてください。",
-    errRequired: "未回答の必須項目があります（赤枠の箇所をご確認ください）。",
-    okCsv: "CSVファイルを保存しました！ご協力ありがとうございます。保存されたファイルを研究者までお送りください。",
-    okCopy: "回答テキストをクリップボードにコピーしました！そのままLINEやメールに貼り付けてお送りください。",
-    okJson: "JSONファイルを保存しました！",
-    confirmReset: "入力済みの内容をすべて消去してもよろしいですか？"
+    st: '達成状況', sts: ['できた', '一部できた', 'できなかった'], diff: '難しさ', diffLo: 'とても簡単', diffHi: 'とても難しい', note: '補足（やり方、つまずいた点、あなたの判断）',
+    susH: '使ってみた印象', susP: '次の 10 の文について、どの程度そう思うかを選んでください。1 = まったくそう思わない、5 = とてもそう思う。',
+    sus: ['このシステムを頻繁に使いたいと思う。', 'このシステムは不必要に複雑だと感じた。', 'このシステムは使いやすいと思った。', 'このシステムを使うには、技術に詳しい人の助けが必要だと思う。', 'このシステムのさまざまな機能は、よくまとまっていると感じた。', 'このシステムには一貫性のないところが多すぎると思った。', 'たいていの人は、このシステムの使い方をすぐに覚えられると思う。', 'このシステムはとても扱いにくいと感じた。', 'このシステムを自信をもって使えた。', 'このシステムを使い始める前に、多くのことを学ぶ必要があった。'],
+    openH: '自由記述',
+    open: ['使っていて役に立ったのはどんな点ですか。具体的に教えてください。', '戸惑った点や、やりたいことの妨げになった点はありましたか。', '同じような作業をふだん行う方法と比べて、どんな違いがありましたか。', '実際のプロジェクトで使うには、何が足りませんか。', 'そのほか、ご意見があればお書きください。'],
+    submitH: '提出', submitP: 'ダウンロードしたファイルを研究者に送ってください。ファイルには、回答、ワークステーションでの操作記録、加えた変更が含まれます。',
+    dl: '結果ファイルをダウンロード', copy: 'テキストとしてコピー', clear: 'すべて消去', need: '先に「参加に同意」にチェックを入れてください。', done: 'ダウンロードしました。このファイルを研究者に送ってください。ありがとうございました。', copied: 'クリップボードにコピーしました。', sure: 'すべての回答を消去しますか？',
+    logInfo: '記録された操作：{n} 件',
   },
   en: {
-    title: "SeamWeaver Polymetric Adaptive Game Music Tool · Evaluation Form",
-    subtitle: "Please complete the hands-on tasks (T1–T4) in SeamWeaver first, then fill out this form (~6–8 min). All responses are anonymous and used solely for academic research (ACM UIST 2027).",
-    consentText: "[Informed Consent] This study evaluates an interactive authoring and combinatorial seam-verification tool for polymetric adaptive game music (targeted for ACM UIST 2027). Your responses are stored under an anonymous ID (e.g., P01) with no personally identifiable information published. Participation is voluntary.",
-    consentAgree: "I understand the above and voluntarily consent to participate anonymously.",
-    partA: "Participant Background",
-    partASub: "Used to contextualize musical training and game-audio tooling experience.",
-    pid: "Anonymous ID / Code (e.g., P01)",
-    years: "Years of Composition / Audio Design Experience",
-    role: "Current Role / Major (e.g., Graduate Student in Game Music Composition)",
-    rolePh: "e.g., M.A. Composition & Sound Design / Film & Game Composer",
-    daws: "DAWs & Notation Software You Regularly Use (Select all)",
-    middleware: "Game Audio Middleware Experience (Wwise / FMOD / CRI ADX2)",
-    mwOpts: ["Select…", "None", "Coursework / Basic", "Production Projects / Proficient"],
-    oddMeter: "Experience Writing Adaptive Transitions or Odd Meters (5/4, 8/8, etc.)",
-    oddOpts: ["Select…", "None", "Occasional", "Frequent"],
-    device: "Listening Device Used Today (e.g., Wired Studio Headphones / Speakers)",
-    devicePh: "e.g., Sony MDR-CD900ST wired headphones",
-    partB: "Quantitative Evaluation (7-Point Likert Scale)",
-    partBSub: "1 = Strongly Disagree, 4 = Neutral, 7 = Strongly Agree.",
-    lowEnd: "Strongly Disagree",
-    highEnd: "Strongly Agree",
-    likert: [
-      { id: "Q1_matrix_speed", code: "Q1", text: "The 400-seam heatmap matrix helped me spot hidden large leaps and octave overshoots much faster than traditional DAW/middleware workflows." },
-      { id: "Q2_matrix_clarity", code: "Q2", text: "The color encoding, cyan dots (boundary pitch shifts), and gold stars (manual pins) were clear and readable without cognitive overload." },
-      { id: "Q3_hybrid_control", code: "Q3", text: "Dynamically computing only the opening two notes while keeping composer-authored fixed templates preserves sufficient creative control." },
-      { id: "Q4_pin_and_nudge", code: "Q4", text: "Combining global strategies (e.g., Minimax) with per-seam manual pinning and live source-note nudging fits how composers refine music." },
-      { id: "Q5_verovio_cursor", code: "Q5", text: "The real-time Verovio staff notation with synchronized blue playhead cursor significantly helped inspect voice leading and metric accents." },
-      { id: "Q6_cross_spatial", code: "Q6", text: "Linking the 320 cross-meter exploration transitions with the 21-room spatial map clarified how level topology drives musical transitions." },
-      { id: "Q7_minimax_audio", code: "Q7", text: "Audibly, Balanced-Minimax sounded noticeably smoother and more natural than Goal-First on high-leap cases." },
-      { id: "Q8_preview_timbre", code: "Q8", text: "Enabling target preview timbre cues (boom / lowPulse / harp / toll / spiral) helped cushion abruptness across musical seams." },
-      { id: "Q9_cost_reduction", code: "Q9", text: "SeamWeaver reduces the trial-and-error and maintenance effort required to author polymetric adaptive game scores." },
-      { id: "Q10_adoption", code: "Q10", text: "With full DAW MIDI import and live game-engine export, I would adopt a tool like this in my real scoring workflow." }
+    title: 'Tasks & survey', back: '← Back to the workstation', intro: 'Thank you for taking part. The session takes about 30–40 minutes: first complete a few small tasks in the workstation, then answer the questions below. Your answers are saved automatically and survive a reload.',
+    consentH: 'About this study', consentP: 'This study examines an editing tool for composers that deals with musical transitions. We record: your answers on this page, your actions in the workstation (what you clicked and when), and the changes you made to links and notes. We do not record your name, audio or screen. You may stop at any time without giving a reason. [Researcher name, affiliation and contact: to be filled in]',
+    consent: 'I have read the information above, I take part voluntarily, and I agree to my data being used as described.', code: 'Participant code (generated automatically — please do not replace it with your name)',
+    bgH: 'About you', role: 'Your role (choose all that apply)', roles: ['Composer', 'Arranger', 'Audio / sound designer', 'Game developer', 'Student', 'Other'],
+    years: 'Years of composing or arranging', game: 'Experience with game music', games: ['None', 'Studied it or tried it on my own', 'Worked on real projects'],
+    tools: 'Tools you have used (choose all that apply)', toolList: ['A DAW such as Cubase / Logic / Live', 'Wwise', 'FMOD', 'Other game-audio middleware', 'A game engine’s built-in audio', 'None of these'],
+    fam: 'How familiar are you with music that changes in response to the player (interactive music)?', famLo: 'Not at all', famHi: 'Very familiar',
+    taskH: 'Tasks', taskP: 'Open the workstation in another tab and work through these in order. It is fine if you cannot complete one — just report what happened.',
+    tasks: [
+      ['Audition one transition', 'Find the link that goes from bar 6 of “Theme 4/4” to “Lullaby”, and audition it.'],
+      ['Compare two transitions', 'Pick two different bars in “Theme 3/4” and audition how each of them switches to “Star Dance”. Which one sounds smoother to you? Write the bar numbers and your reasons below.'],
+      ['Revise a transition', 'Pick a transition bar (bridge) that you find unconvincing, open its piano roll, and change the melody until you are satisfied. Write which one you changed and how.'],
+      ['Build a path', 'Build and play this path: from “Theme 4/4” move to another area’s theme, then start a battle from there.'],
+      ['Change a link', 'Create a link that did not exist before and audition it; then delete it.'],
     ],
-    partC: "Three Key Aesthetic & Workflow Preferences",
-    partCSub: "Directly informs our core voice-leading and interface trade-offs.",
-    prefA: "Preference A (Barline Pitch Repetition): On cases like Rose Pavane 5/4 Bar 1, which do you prefer?",
-    prefAOpts: [
-      { v: "balanced-minimax", l: "Balanced-Minimax (preserve exact barline pitch repetition, accept 8st leap)" },
-      { v: "free-2note", l: "Free-2Note (allow small barline step to eliminate all ≥7st leaps)" },
-      { v: "depends", l: "Depends on musical style / dramatic context (explain briefly below)" }
-    ],
-    prefAReason: "(Optional) Musical rationale for Preference A:",
-    prefAReasonPh: "e.g., lyrical cues need smooth voice leading, while boss entries can embrace dramatic leaps…",
-    prefB: "Preference B (Cross-Meter Tempo Change): On 4/4 (♩132) → 8/8 (♪168), which feels more natural?",
-    prefBOpts: [
-      { v: "barline-snap", l: "Barline Tempo Snap (hold source tempo until exact barline)" },
-      { v: "room-entry-glide", l: "Room-Entry Tempo Glide (start gliding immediately upon entering room)" },
-      { v: "no-diff", l: "No strong preference / both acceptable" }
-    ],
-    prefC: "Preference C (Primary Representation): Which view do you prefer for inspecting and editing seams?",
-    prefCOpts: [
-      { v: "score", l: "Live Staff Score (with synchronized playhead)" },
-      { v: "split", l: "Dual View (Staff Score + Piano Roll)" },
-      { v: "roll", l: "Piano Roll Only (with semitone interval arcs)" }
-    ],
-    partD: "Open-Ended Feedback (Honest Critique Is Gold!)",
-    partDSub: "Even brief notes on friction points or missing features are tremendously valuable for our iteration.",
-    openQs: [
-      { id: "F1_pain", label: "F1. What is your biggest pain point when authoring exploration-to-battle transitions or multi-meter variations in DAWs + Wwise/FMOD?", ph: "e.g., editing one bar breaks dozens of pre-rendered transitions…" },
-      { id: "F2_best", label: "F2. Which feature or moment stood out as most genuinely helpful to a composer?", ph: "e.g., 1/2/3/4 instant A/B auditioning, spotting 24 octaves at a glance, live staff cursor…" },
-      { id: "F3_control", label: "F3. How do you feel about the automation boundary (2 dynamic notes + composer fixed template + manual pins)? What else should or should never be automated?", ph: "Share your perspective on harmony, bass voice leading, orchestration…" },
-      { id: "F4_notation", label: "F4. Any critiques of the live Verovio staff engraving (enharmonic spelling, playhead sync, time signatures) or piano roll?", ph: "e.g., accidental spelling in specific bars, wanting direct pitch dragging on staff…" },
-      { id: "F5_next_feature", label: "F5. If the next version added only 1–2 features to make this production-ready for your projects, what should they be?", ph: "e.g., custom target bridge template editor, live Unity hot-reload, polyphonic voice-leading…" },
-      { id: "F6_cross_meter", label: "F6. Thoughts on linking the 21-room map with 320 cross-meter transitions and the 3/4, 5/4, 8/8, 13/8 theme transforms?", ph: "e.g., usefulness for composer–level designer collaboration, which meter felt most natural…" }
-    ],
-    btnDownloadCsv: "Submit & Download CSV",
-    btnCopy: "Copy Text Summary (WeChat/LINE/Email)",
-    btnDownloadJson: "Download JSON",
-    btnReset: "Reset Form",
-    exportHint: "Tip: After clicking 'Submit & Download CSV', please send the downloaded file to the researcher (or click 'Copy Text Summary' to paste directly). Progress is auto-saved locally.",
-    errConsent: "Please check the informed consent box at the top first.",
-    errRequired: "Some required items are unanswered (highlighted in red).",
-    okCsv: "CSV downloaded! Thank you for participating — please send the file back to the researcher.",
-    okCopy: "Copied to clipboard! You can paste and send it directly via LINE / WeChat / Email.",
-    okJson: "JSON downloaded!",
-    confirmReset: "Clear all entered answers?"
-  }
+    st: 'Outcome', sts: ['Completed', 'Partly completed', 'Could not complete'], diff: 'Difficulty', diffLo: 'Very easy', diffHi: 'Very hard', note: 'Notes (what you did, where you got stuck, your judgement)',
+    susH: 'Your impressions', susP: 'For each of the 10 statements, choose how much you agree. 1 = strongly disagree, 5 = strongly agree.',
+    sus: ['I think that I would like to use this system frequently.', 'I found the system unnecessarily complex.', 'I thought the system was easy to use.', 'I think that I would need the support of a technical person to be able to use this system.', 'I found the various functions in this system were well integrated.', 'I thought there was too much inconsistency in this system.', 'I would imagine that most people would learn to use this system very quickly.', 'I found the system very cumbersome to use.', 'I felt very confident using the system.', 'I needed to learn a lot of things before I could get going with this system.'],
+    openH: 'Open questions',
+    open: ['What, if anything, was useful to you? Please be specific.', 'What confused you or got in the way of what you wanted to do?', 'How did this differ from the way you currently handle similar work?', 'What is missing before you could use it on a real project?', 'Anything else you would like to tell us.'],
+    submitH: 'Submit', submitP: 'After downloading, please send the file to the researcher. It contains your answers, the record of your actions in the workstation, and the changes you made.',
+    dl: 'Download result file', copy: 'Copy as text', clear: 'Clear everything', need: 'Please tick the consent box first.', done: 'Downloaded. Please send this file to the researcher. Thank you.', copied: 'Copied to the clipboard.', sure: 'Clear all answers?',
+    logInfo: 'Recorded actions: {n}',
+  },
 };
+const LANGS = ['zh', 'ja', 'en'];
+let lang = new URLSearchParams(location.search).get('lang') || (() => { try { return localStorage.getItem('seam.lang'); } catch { return null; } })() || 'zh';
+if (!LANGS.includes(lang)) lang = 'zh';
+let A = {}; try { A = JSON.parse(localStorage.getItem('seam.survey.v2') || '{}'); } catch {}
+if (!A.code) A.code = 'P-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+if (!A.started) A.started = new Date().toISOString();
+const saveA = () => { try { localStorage.setItem('seam.survey.v2', JSON.stringify(A)); } catch {} };
+const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const k in attrs) { if (k === 'text') e.textContent = attrs[k]; else if (k.startsWith('on')) e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); } e.append(...kids.flat().filter(Boolean)); return e; };
 
-const DAW_LIST = ["Cubase", "Logic Pro", "Studio One", "Ableton Live", "FL Studio", "Pro Tools", "Dorico", "Sibelius", "MuseScore", "Wwise", "FMOD"];
-const STORAGE_KEY = "seamweaver_survey_draft_v1";
-let currentLang = "zh";
+function text(key, rows) { const t = el('textarea', { oninput: e => { A[key] = e.target.value; saveA(); } }); t.value = A[key] || ''; if (rows) t.style.minHeight = rows * 22 + 'px'; return t; }
+function radios(key, opts) { return el('div', { class: 'opts' }, opts.map((o, i) => { const inp = el('input', { type: 'radio', name: key, onchange: () => { A[key] = i; saveA(); } }); inp.checked = A[key] === i; return el('label', {}, inp, el('span', { text: o })); })); }
+function checks(key, opts) { A[key] = A[key] || []; return el('div', { class: 'opts' }, opts.map((o, i) => { const inp = el('input', { type: 'checkbox', onchange: e => { const s = new Set(A[key]); e.target.checked ? s.add(i) : s.delete(i); A[key] = [...s].sort(); saveA(); } }); inp.checked = A[key].includes(i); return el('label', {}, inp, el('span', { text: o })); })); }
+function scale(key, n, lo, hi) { return el('div', { class: 'scale' }, el('span', { text: lo }), el('div', { class: 'opts' }, Array.from({ length: n }, (_, i) => { const inp = el('input', { type: 'radio', name: key, onchange: () => { A[key] = i + 1; saveA(); } }); inp.checked = A[key] === i + 1; return el('label', {}, inp, el('span', { text: i + 1 })); })), el('span', { text: hi })); }
+const q = (num, label, ...body) => el('div', { class: 'q' }, el('div', { class: 'lab' }, num ? el('span', { class: 'num', text: num }) : null, label), ...body);
 
-function saveDraft() {
-  const data = collectFormData();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ lang: currentLang, data }));
+function render() {
+  const t = L[lang]; document.documentElement.lang = lang; document.title = 'SeamStation · ' + t.title;
+  document.querySelector('#ttl').textContent = t.title;
+  const back = document.querySelector('#back'); back.textContent = t.back; back.href = 'index.html';
+  const lb = document.querySelector('#langs'); lb.innerHTML = '';
+  for (const l of LANGS) lb.append(el('button', { class: l === lang ? 'on' : '', text: { zh: '中', ja: '日', en: 'EN' }[l], onclick: () => { lang = l; try { localStorage.setItem('seam.lang', l); } catch {} render(); } }));
+  const root = document.querySelector('#root'); root.innerHTML = '';
+  let nLog = 0; try { nLog = JSON.parse(localStorage.getItem('seam.log.v1') || '[]').length; } catch {}
+  const consent = el('input', { type: 'checkbox', onchange: e => { A.consent = e.target.checked; saveA(); } }); consent.checked = !!A.consent;
+  const code = el('input', { type: 'text', oninput: e => { A.code = e.target.value; saveA(); } }); code.value = A.code;
+  const years = el('input', { type: 'number', min: 0, max: 80, oninput: e => { A.years = e.target.value; saveA(); } }); years.value = A.years || ''; years.style.width = '120px';
+  const msg = el('div', { id: 'done', class: 'warn' });
+  root.append(
+    el('h1', { text: t.title }), el('p', { class: 'dim', text: t.intro }),
+    el('section', {}, el('h2', { text: t.consentH }), el('p', { class: 'dim', text: t.consentP }),
+      el('div', { class: 'q' }, el('label', { class: 'check', style: 'color:var(--text);align-items:flex-start' }, consent, el('span', { text: t.consent }))),
+      q('', t.code, code)),
+    el('section', {}, el('h2', { text: t.bgH }),
+      q('A1', t.role, checks('role', t.roles)), q('A2', t.years, years), q('A3', t.game, radios('game', t.games)), q('A4', t.tools, checks('tools', t.toolList)), q('A5', t.fam, scale('fam', 7, t.famLo, t.famHi))),
+    el('section', {}, el('h2', { text: t.taskH }), el('p', { class: 'dim', text: t.taskP }),
+      t.tasks.map((tk, i) => el('div', { class: 'task' }, el('h3', { text: `T${i + 1}  ${tk[0]}` }), el('p', { text: tk[1] }),
+        el('div', { class: 'row' }, el('span', { class: 'dim', text: t.st }), radios('t' + (i + 1) + '_st', t.sts)),
+        el('div', { class: 'row' }, el('span', { class: 'dim', text: t.diff }), scale('t' + (i + 1) + '_diff', 7, t.diffLo, t.diffHi)),
+        (() => { const x = text('t' + (i + 1) + '_note', 2); x.placeholder = t.note; return x; })()))),
+    el('section', {}, el('h2', { text: t.susH }), el('p', { class: 'dim', text: t.susP }), t.sus.map((s, i) => q('S' + (i + 1), s, scale('sus' + (i + 1), 5, '1', '5')))),
+    el('section', {}, el('h2', { text: t.openH }), t.open.map((s, i) => q('F' + (i + 1), s, text('open' + (i + 1))))),
+    el('section', {}, el('h2', { text: t.submitH }), el('p', { class: 'dim', text: t.submitP + ' ' + t.logInfo.replace('{n}', nLog) }),
+      el('div', { class: 'actions' },
+        el('button', { class: 'primary', text: t.dl, onclick: () => { if (!A.consent) { msg.textContent = t.need; return; } download(); msg.textContent = t.done; } }),
+        el('button', { text: t.copy, onclick: async () => { if (!A.consent) { msg.textContent = t.need; return; } await navigator.clipboard.writeText(JSON.stringify(payload(false), null, 1)); msg.textContent = t.copied; } }),
+        el('span', { class: 'spacer' }),
+        el('button', { text: t.clear, onclick: () => { if (confirm(t.sure)) { const c = A.code; A = { code: c, started: new Date().toISOString() }; saveA(); render(); } } })),
+      msg));
 }
-
-function loadDraft() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch { return null; }
+function payload(full = true) {
+  let log = [], edits = null; try { log = JSON.parse(localStorage.getItem('seam.log.v1') || '[]'); edits = JSON.parse(localStorage.getItem('seam.edits.v1') || 'null'); } catch {}
+  const sus = Array.from({ length: 10 }, (_, i) => A['sus' + (i + 1)]);
+  const susScore = sus.every(Number.isFinite) ? sus.reduce((s, v, i) => s + (i % 2 === 0 ? v - 1 : 5 - v), 0) * 2.5 : null;
+  return { format: 'seamstation-survey-2', lang, submitted: new Date().toISOString(), answers: A, susScore, userAgent: navigator.userAgent, log: full ? log : `(${log.length})`, edits: full ? edits : (edits ? '(included in file)' : null) };
 }
-
-function renderForm(lang, restoreData = null) {
-  currentLang = lang;
-  const t = I18N[lang];
-  document.documentElement.lang = lang === "ja" ? "ja" : lang === "en" ? "en" : "zh-CN";
-  document.querySelectorAll(".lang-bar button").forEach((b) => {
-    b.classList.toggle("active", b.dataset.lang === lang);
-  });
-
-  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setText("t-title", t.title);
-  setText("t-subtitle", t.subtitle);
-  setText("t-consentText", t.consentText);
-  setText("t-consentAgree", t.consentAgree);
-  setText("t-partA", t.partA);
-  setText("t-partASub", t.partASub);
-  setText("t-pid", t.pid);
-  setText("t-years", t.years);
-  setText("t-role", t.role);
-  setText("t-daws", t.daws);
-  setText("t-middleware", t.middleware);
-  setText("t-oddMeter", t.oddMeter);
-  setText("t-device", t.device);
-  setText("t-partB", t.partB);
-  setText("t-partBSub", t.partBSub);
-  setText("t-partC", t.partC);
-  setText("t-partCSub", t.partCSub);
-  setText("t-prefA", t.prefA);
-  setText("t-prefAReason", t.prefAReason);
-  setText("t-prefB", t.prefB);
-  setText("t-prefC", t.prefC);
-  setText("t-partD", t.partD);
-  setText("t-partDSub", t.partDSub);
-  setText("t-btnDownloadCsv", t.btnDownloadCsv);
-  setText("btnCopy", t.btnCopy);
-  setText("btnDownloadJson", t.btnDownloadJson);
-  setText("btnReset", t.btnReset);
-  setText("t-exportHint", t.exportHint);
-
-  document.getElementById("role").placeholder = t.rolePh;
-  document.getElementById("device").placeholder = t.devicePh;
-  document.getElementById("prefAReason").placeholder = t.prefAReasonPh;
-
-  const snap = restoreData || collectFormData();
-
-  // DAWs
-  const dawGrid = document.getElementById("dawGrid");
-  dawGrid.innerHTML = DAW_LIST.map((d) => `
-    <label class="opt-pill">
-      <input type="checkbox" name="daws" value="${d}" ${(snap.daws || []).includes(d) ? "checked" : ""} />
-      <span>${d}</span>
-    </label>
-  `).join("");
-
-  // Selects
-  const fillSelect = (id, opts, val) => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = opts.map((o, idx) => `<option value="${idx === 0 ? "" : idx}" ${String(val) === String(idx) ? "selected" : ""}>${o}</option>`).join("");
-  };
-  fillSelect("middleware", t.mwOpts, snap.middleware);
-  fillSelect("oddMeterExp", t.oddOpts, snap.oddMeterExp);
-
-  // Likert Q1-Q10
-  const likertHost = document.getElementById("likertContainer");
-  likertHost.innerHTML = t.likert.map((item) => {
-    const cur = snap[item.id] || "";
-    const btns = [1, 2, 3, 4, 5, 6, 7].map((v) => `
-      <label class="likert-btn">
-        <input type="radio" name="${item.id}" value="${v}" ${String(cur) === String(v) ? "checked" : ""} required />
-        <span>${v}</span>
-      </label>
-    `).join("");
-    return `
-      <div class="likert-item" data-qid="${item.id}">
-        <div class="likert-q"><span class="likert-num">${item.code}</span>${item.text}<span class="req">*</span></div>
-        <div class="likert-row">
-          <span class="likert-end">${t.lowEnd}</span>
-          ${btns}
-          <span class="likert-end right">${t.highEnd}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  // Preferences A/B/C
-  const fillRadios = (hostId, name, opts, cur) => {
-    document.getElementById(hostId).innerHTML = opts.map((o) => `
-      <label class="opt-pill">
-        <input type="radio" name="${name}" value="${o.v}" ${cur === o.v ? "checked" : ""} required />
-        <span>${o.l}</span>
-      </label>
-    `).join("");
-  };
-  fillRadios("prefAGroup", "prefA", t.prefAOpts, snap.prefA);
-  fillRadios("prefBGroup", "prefB", t.prefBOpts, snap.prefB);
-  fillRadios("prefCGroup", "prefC", t.prefCOpts, snap.prefC);
-
-  // Open questions F1-F6
-  const openHost = document.getElementById("openContainer");
-  openHost.innerHTML = t.openQs.map((q) => `
-    <div class="field">
-      <label class="field-label" for="${q.id}">${q.label}</label>
-      <textarea id="${q.id}" name="${q.id}" placeholder="${q.ph}">${(snap[q.id] || "").replace(/</g, "&lt;")}</textarea>
-    </div>
-  `).join("");
-
-  // Restore top-level fields if restoring draft
-  if (restoreData) {
-    document.getElementById("consent").checked = Boolean(restoreData.consent);
-    document.getElementById("pid").value = restoreData.pid || "";
-    document.getElementById("years").value = restoreData.years || "";
-    document.getElementById("role").value = restoreData.role || "";
-    document.getElementById("device").value = restoreData.device || "";
-    document.getElementById("prefAReason").value = restoreData.prefAReason || "";
-  }
+function download() {
+  const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(payload())], { type: 'application/json' })), download: `seamstation_${A.code}.json` });
+  document.body.append(a); a.click(); a.remove();
 }
-
-function collectFormData() {
-  const form = document.getElementById("surveyForm");
-  const getVal = (id) => (document.getElementById(id)?.value || "").trim();
-  const getRadio = (name) => form.querySelector(`input[name="${name}"]:checked`)?.value || "";
-  const daws = Array.from(form.querySelectorAll('input[name="daws"]:checked')).map((el) => el.value);
-
-  const out = {
-    timestamp: new Date().toISOString(),
-    ui_lang: currentLang,
-    layout_mode: SURVEY_LAYOUT_MODE,
-    consent: document.getElementById("consent")?.checked || false,
-    pid: getVal("pid"),
-    years: getVal("years"),
-    role: getVal("role"),
-    daws,
-    middleware: getVal("middleware"),
-    oddMeterExp: getVal("oddMeterExp"),
-    device: getVal("device"),
-    prefA: getRadio("prefA"),
-    prefAReason: getVal("prefAReason"),
-    prefB: getRadio("prefB"),
-    prefC: getRadio("prefC"),
-  };
-  for (const q of I18N.en.likert) out[q.id] = getRadio(q.id);
-  for (const q of I18N.en.openQs) out[q.id] = getVal(q.id);
-  return out;
-}
-
-function validateForm(data) {
-  const t = I18N[currentLang];
-  document.querySelectorAll(".likert-item.missing").forEach((el) => el.classList.remove("missing"));
-  if (!data.consent) { showToast(t.errConsent, false); return false; }
-
-  let ok = true;
-  if (!data.pid || !data.years || !data.role || !data.middleware || !data.oddMeterExp || !data.prefA || !data.prefB || !data.prefC) {
-    ok = false;
-  }
-  for (const q of I18N.en.likert) {
-    if (!data[q.id]) {
-      ok = false;
-      document.querySelector(`.likert-item[data-qid="${q.id}"]`)?.classList.add("missing");
-    }
-  }
-  if (!ok) {
-    showToast(t.errRequired, false);
-    const firstMissing = document.querySelector(".likert-item.missing") || document.querySelector(":invalid");
-    firstMissing?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-  return ok;
-}
-
-function showToast(msg, ok) {
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.className = "toast " + (ok ? "ok" : "err");
-}
-
-function toCsv(data) {
-  const cols = [
-    "timestamp", "ui_lang", "layout_mode", "pid", "years", "role", "daws", "middleware", "oddMeterExp", "device",
-    ...I18N.en.likert.map((q) => q.id),
-    "prefA", "prefAReason", "prefB", "prefC",
-    ...I18N.en.openQs.map((q) => q.id)
-  ];
-  const esc = (v) => {
-    const s = Array.isArray(v) ? v.join(";") : String(v ?? "");
-    return `"${s.replace(/"/g, '""').replace(/\r?\n/g, " \\n ")}"`;
-  };
-  return "\uFEFF" + cols.join(",") + "\n" + cols.map((c) => esc(data[c])).join(",") + "\n";
-}
-
-function toReadableSummary(data) {
-  const lines = [
-    `=== SeamWeaver User Study Response (${data.pid || "Anonymous"}) ===`,
-    `Time: ${data.timestamp} | Lang: ${data.ui_lang}`,
-    `Background: ${data.role} | Exp: ${data.years} yrs | DAWs: ${(data.daws || []).join(", ")}`,
-    `Middleware(1-3): ${data.middleware} | OddMeter(1-3): ${data.oddMeterExp} | Device: ${data.device}`,
-    `--- Likert (1-7) ---`,
-    ...I18N.en.likert.map((q) => `${q.code} (${q.id}): ${data[q.id]}`),
-    `--- Preferences ---`,
-    `PrefA (H3 Barline): ${data.prefA} ${data.prefAReason ? `| Reason: ${data.prefAReason}` : ""}`,
-    `PrefB (Tempo): ${data.prefB} | PrefC (View): ${data.prefC}`,
-    `--- Open Feedback ---`,
-    ...I18N.en.openQs.map((q) => `${q.id}: ${data[q.id] || "(empty)"}`)
-  ];
-  return lines.join("\n");
-}
-
-function downloadBlob(content, filename, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-async function postWebhookIfConfigured(data) {
-  if (!OPTIONAL_WEBHOOK_URL) return;
-  try {
-    await fetch(OPTIONAL_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  } catch { /* silent fallback to local download */ }
-}
-
-// Embed & layout query params + parent postMessage sync
-const URL_PARAMS = new URLSearchParams(window.location.search);
-const IS_EMBED = URL_PARAMS.get("embed") === "1";
-const SURVEY_LAYOUT_MODE = URL_PARAMS.get("layout") || (IS_EMBED ? "split" : "standalone");
-if (IS_EMBED) {
-  document.body.classList.add("embed-mode");
-}
-
-// Init
-const draft = loadDraft();
-const urlLang = URL_PARAMS.get("lang");
-const initLang = (urlLang && I18N[urlLang]) ? urlLang : (draft?.lang || "zh");
-renderForm(initLang, draft?.data || null);
-
-window.addEventListener("message", (ev) => {
-  if (ev.origin !== window.location.origin) return;
-  const msg = ev.data;
-  if (msg && msg.type === "seamweaver:set-lang" && I18N[msg.lang] && msg.lang !== currentLang) {
-    saveDraft();
-    renderForm(msg.lang);
-    saveDraft();
-  }
-});
-
-window.addEventListener("storage", (ev) => {
-  if (ev.key === STORAGE_KEY) {
-    const fresh = loadDraft();
-    if (fresh && fresh.data) {
-      renderForm(fresh.lang || currentLang, fresh.data);
-    }
-  }
-});
-
-document.querySelectorAll(".lang-bar button").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    saveDraft();
-    renderForm(btn.dataset.lang);
-    saveDraft();
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: "seamweaver:survey-lang", lang: btn.dataset.lang }, window.location.origin);
-    }
-  });
-});
-
-document.getElementById("surveyForm").addEventListener("input", saveDraft);
-document.getElementById("surveyForm").addEventListener("change", saveDraft);
-
-document.getElementById("surveyForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const data = collectFormData();
-  if (!validateForm(data)) return;
-  const safeId = (data.pid || "anon").replace(/[^a-zA-Z0-9_-]/g, "_");
-  const stamp = new Date().toISOString().slice(0, 10);
-  downloadBlob(toCsv(data), `seamweaver_survey_${safeId}_${stamp}.csv`, "text/csv;charset=utf-8");
-  await postWebhookIfConfigured(data);
-  const box = document.getElementById("previewBox");
-  box.style.display = "block";
-  box.textContent = toReadableSummary(data);
-  showToast(I18N[currentLang].okCsv, true);
-});
-
-document.getElementById("btnCopy").addEventListener("click", async () => {
-  const data = collectFormData();
-  if (!validateForm(data)) return;
-  const text = toReadableSummary(data);
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast(I18N[currentLang].okCopy, true);
-  } catch {
-    showToast(I18N[currentLang].okCopy, true);
-  }
-  const box = document.getElementById("previewBox");
-  box.style.display = "block";
-  box.textContent = text;
-});
-
-document.getElementById("btnDownloadJson").addEventListener("click", () => {
-  const data = collectFormData();
-  if (!validateForm(data)) return;
-  const safeId = (data.pid || "anon").replace(/[^a-zA-Z0-9_-]/g, "_");
-  const stamp = new Date().toISOString().slice(0, 10);
-  downloadBlob(JSON.stringify(data, null, 2), `seamweaver_survey_${safeId}_${stamp}.json`, "application/json");
-  showToast(I18N[currentLang].okJson, true);
-});
-
-document.getElementById("btnReset").addEventListener("click", () => {
-  if (!confirm(I18N[currentLang].confirmReset)) return;
-  localStorage.removeItem(STORAGE_KEY);
-  document.getElementById("surveyForm").reset();
-  renderForm(currentLang, {});
-  document.getElementById("previewBox").style.display = "none";
-  document.getElementById("toast").className = "toast";
-});
+render();
 </script>
 </body>
 </html>
