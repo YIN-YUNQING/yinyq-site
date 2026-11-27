@@ -9,7 +9,7 @@ class SeamSynth {
     this.sampleRate = sampleRate > 0 ? sampleRate : 48000;
     this.volume = 1;
     this.voices = [];
-    for (let i = 0; i < 64; i++) this.voices.push({ on: false });
+    for (let i = 0; i < 64; i++) this.voices.push({ on: false, type: 0, amp: 0, send: 0, ghost: false, stage: 0, env: 0, ph: 0, ph2: 0, aux: 0, auxDec: 0, lp: 0, k: 0, dec: 0, gl: 0, gr: 0, hold: 0, atkInc: 0, inc: 0, inc2: 0 });
     this.seed = 0x1234567;
     this.size = 0;
     this.dlyL = new Float32Array(this.sampleRate * 2); this.dlyR = new Float32Array(this.sampleRate * 2);
@@ -43,7 +43,9 @@ class SeamSynth {
     }
     if (slot < 0) slot = 0;
     const sr = this.sampleRate;
-    const v = { on: true, type, amp, send: ghost ? send * 0.5 : send, ghost, stage: 0, env: 0, ph: 0, ph2: 0, aux: 0, auxDec: 0, lp: 0, k: 0, dec: 0 };
+    const v = vs[slot];      // 复用原来的对象：音频线程里不做内存分配，免得垃圾回收打断声音
+    v.on = true; v.type = type; v.amp = amp; v.send = ghost ? send * 0.5 : send; v.ghost = ghost;
+    v.stage = 0; v.env = 0; v.ph = 0; v.ph2 = 0; v.aux = 0; v.auxDec = 0; v.lp = 0; v.k = 0; v.dec = 0;
     v.gl = Math.cos((pan + 1) * Math.PI * 0.25);
     v.gr = Math.sin((pan + 1) * Math.PI * 0.25);
     v.hold = Math.trunc(holdSeconds * sr);
@@ -63,7 +65,6 @@ class SeamSynth {
       case Gtr: v.inc2 = v.inc * 0.5; v.aux = 3.5; v.k = 0.22; v.dec = this.decay(0.22); break;
       default: v.inc = 120 / sr; v.k = 0.1; v.dec = this.decay(0.05); v.atkInc = 1; break;
     }
-    vs[slot] = v;
   }
   allNotesOff() {
     const d = this.decay(0.03);

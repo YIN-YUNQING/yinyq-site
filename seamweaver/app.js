@@ -1,4 +1,4 @@
-import { T, N, lang, setLang, LANGS } from './i18n.js?v=7cf97dd6';
+import { T, N, lang, setLang, LANGS } from './i18n.js?v=dafa67c0';
 
 // 切换工作站 · 网页版。读同一个音乐包（bank.json），能看切换图、试听连线、连播、改连线、改音符。
 // 所有改动只存在这台浏览器里（localStorage），问卷页会把改动和操作记录一起带走。
@@ -33,8 +33,8 @@ let actx = null, node = null, audioP = null;
 function ensureAudio() {
   if (audioP) { if (actx && actx.state !== 'running') actx.resume(); return audioP; }
   audioP = (async () => {
-    actx = new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' });
-    await actx.audioWorklet.addModule('worklet.js?v=7cf97dd6');
+    actx = new AudioContext({ sampleRate: 48000, latencyHint: 'balanced' });   // 不追求最低延迟：缓冲大一点，机器忙的时候不容易爆音
+    await actx.audioWorklet.addModule('worklet.js?v=dafa67c0');
     node = new AudioWorkletNode(actx, 'seam', { numberOfInputs: 0, outputChannelCount: [2] });
     node.port.onmessage = e => onAudio(e.data);
     node.connect(actx.destination);
@@ -44,6 +44,14 @@ function ensureAudio() {
   return audioP;
 }
 function send(m) { ensureAudio().then(() => node.port.postMessage(m)); }
+// 换了耳机 / 音箱之后，旧的音频通道有时会一直失真到刷新网页为止：这里直接重建一条。
+function rebuildAudio(why) {
+  if (!actx) return;
+  try { node.disconnect(); actx.close(); } catch {}
+  actx = null; node = null; audioP = null; play.playing = false; ui.userStopped = true;
+  log('audioRebuild', { why }); updateStatus(); dirty = true;
+}
+try { navigator.mediaDevices?.addEventListener('devicechange', () => rebuildAudio('devicechange')); } catch {}
 function onAudio(m) {
   if (m.t !== 'state') return;
   const was = play.playing;
@@ -92,10 +100,18 @@ function layout() {
       pos.set(b.id, { x, y: py, w, h: 58, barW: w / b.bars });
       x += w + (part === 'p3' ? 90 : 48);
     }
-    groups.push({ y: y - 44, label: `${th.beatsPerBar}/${th.beatsPerBar >= 8 ? 8 : 4}`, boss });
+    groups.push({ id: th.id, label: `${th.beatsPerBar}/${th.beatsPerBar >= 8 ? 8 : 4}`, boss });
     y = py + 58 + 120;
   }
+  try { const m = JSON.parse(localStorage.getItem('seam.pos.v1') || '{}'); for (const id in m) { const p = pos.get(+id); if (p) { p.x = m[id][0]; p.y = m[id][1]; } } } catch {}
+  for (const l of bank.links) delete l._c;
 }
+function savePos() {
+  const m = {}; for (const id of moved) { const p = pos.get(id); if (p) m[id] = [Math.round(p.x), Math.round(p.y)]; }
+  try { localStorage.setItem('seam.pos.v1', JSON.stringify(m)); } catch {}
+}
+const moved = new Set();
+try { for (const id in JSON.parse(localStorage.getItem('seam.pos.v1') || '{}')) moved.add(+id); } catch {}
 function exitPt(l) {
   const p = pos.get(l.from);
   return l.exitBar < 0 ? { x: p.x + p.w, y: p.y + p.h / 2, d: 'r' } : { x: p.x + (l.exitBar + 1) * p.barW - 10, y: p.y + p.h, d: 'd' };
@@ -273,7 +289,8 @@ function commitBlock(b, fromUndo) {
 function resetAll() {
   if (!confirm(T('confirmReset'))) return;
   bank = JSON.parse(pristine); changed.clear(); linksChanged = false; undoStack.length = 0;
-  try { localStorage.removeItem('seam.edits.v1'); } catch {}
+  try { localStorage.removeItem('seam.edits.v1'); localStorage.removeItem('seam.pos.v1'); } catch {}
+  moved.clear();
   index(); layout(); ui.chain = []; closeEditor(); select(null); chainChanged();
   if (node) node.port.postMessage({ t: 'bank', bank, thickness: ui.thickness });
   log('resetAll');
@@ -320,9 +337,10 @@ function draw() {
   // 分区标题
   g.textBaseline = 'alphabetic';
   for (const gr of groups) {
-    g.font = `650 22px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.2)'; g.fillText(gr.label, X0, gr.y + 8);
+    const tp = pos.get(gr.id); if (!tp) continue;
+    g.font = `650 22px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.2)'; g.fillText(gr.label, tp.x, tp.y - 36);
     const w = g.measureText(gr.label).width;
-    g.font = `500 13px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.28)'; g.fillText(N(gr.boss), X0 + w + 12, gr.y + 7);
+    g.font = `500 13px ${FONT}`; g.fillStyle = 'rgba(255,255,255,.28)'; g.fillText(N(gr.boss), tp.x + w + 12, tp.y - 37);
   }
   // 连线：先画全部的淡底，再画选中模块的彩色通道
   const act = activeLinks(), actSet = new Set(act), chainSet = new Set(ui.chain);
@@ -450,6 +468,7 @@ cv.addEventListener('pointerdown', e => {
   const w = toWorld(e), h = hit(w);
   down = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, h, moved: false };
   if (h.type === 'node') ui.drag = { type: 'link', from: h.block.id, exitBar: h.bar, x: w.x, y: w.y };
+  else if (h.type === 'block' && !e.altKey) { const p = pos.get(h.block.id); down.move = { id: h.block.id, px: p.x, py: p.y, wx: w.x, wy: w.y }; }
   cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener('pointermove', e => {
@@ -457,6 +476,12 @@ cv.addEventListener('pointermove', e => {
   if (down) {
     if (Math.hypot(e.clientX - down.sx, e.clientY - down.sy) > 4) down.moved = true;
     if (ui.drag) { ui.drag.x = w.x; ui.drag.y = w.y; const h = hit(w); ui.hoverBlock = h.block ? h.block.id : null; }
+    else if (down.move && down.moved) {
+      const m = down.move, p = pos.get(m.id);
+      p.x = Math.round(m.px + (e.clientX - down.sx) / view.k); p.y = Math.round(m.py + (e.clientY - down.sy) / view.k);
+      for (const l of bank.links) if (l.from === m.id || l.to === m.id) delete l._c;
+      cv.style.cursor = 'grabbing';
+    }
     else if (down.moved) { view.x = down.vx + e.clientX - down.sx; view.y = down.vy + e.clientY - down.sy; cv.style.cursor = 'grabbing'; }
     dirty = true; return;
   }
@@ -473,7 +498,7 @@ cv.addEventListener('pointerup', e => {
     if (d.moved && h.block && (h.type === 'block' || h.type === 'playbtn' || h.type === 'pen')) addLink(dr.from, dr.exitBar, h.block.id);
     return;
   }
-  if (d.moved) return;
+  if (d.moved) { if (d.move) { moved.add(d.move.id); savePos(); log('moveBlock', { block: byId.get(d.move.id).name }); } return; }
   const h = d.h;
   if (h.type === 'playbtn') { if (play.playing && play.blockId === h.block.id) stopAll(); else playBlock(h.block); }
   else if (h.type === 'pen') openEditor(h.block);
@@ -484,7 +509,7 @@ cv.addEventListener('pointerup', e => {
 cv.addEventListener('dblclick', e => { const h = hit(toWorld(e)); if (h.type === 'block') playBlock(h.block, h.bar); });
 cv.addEventListener('wheel', e => {
   e.preventDefault();
-  if (e.ctrlKey || e.metaKey) {
+  if (e.metaKey || e.ctrlKey) {      // Win 键（Mac 上是 ⌘）+ 滚轮；触控板双指捏合浏览器会报成 ctrl + 滚轮
     const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
     const k2 = Math.max(0.18, Math.min(2.2, view.k * Math.exp(-e.deltaY * 0.01)));
     view.x = mx - (mx - view.x) * k2 / view.k; view.y = my - (my - view.y) * k2 / view.k; view.k = k2;
@@ -727,7 +752,7 @@ function frame() {
   requestAnimationFrame(frame);
 }
 (async () => {
-  const txt = await (await fetch('bank.json?v=7cf97dd6')).text();
+  const txt = await (await fetch('bank.json?v=dafa67c0')).text();
   pristine = txt; bank = JSON.parse(txt);
   restore(); index(); layout(); applyLang(); resize();
   view.k = Math.max(0.55, Math.min(1, (W - 40) / (16 * BW + 2 * X0))); view.x = 20; view.y = 6;
