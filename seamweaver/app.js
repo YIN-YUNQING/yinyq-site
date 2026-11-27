@@ -1,4 +1,4 @@
-import { T, N, lang, setLang, LANGS } from './i18n.js?v=dafa67c0';
+import { T, N, lang, setLang, LANGS } from './i18n.js?v=f9073211';
 
 // 切换工作站 · 网页版。读同一个音乐包（bank.json），能看切换图、试听连线、连播、改连线、改音符。
 // 所有改动只存在这台浏览器里（localStorage），问卷页会把改动和操作记录一起带走。
@@ -34,7 +34,7 @@ function ensureAudio() {
   if (audioP) { if (actx && actx.state !== 'running') actx.resume(); return audioP; }
   audioP = (async () => {
     actx = new AudioContext({ sampleRate: 48000, latencyHint: 'balanced' });   // 不追求最低延迟：缓冲大一点，机器忙的时候不容易爆音
-    await actx.audioWorklet.addModule('worklet.js?v=dafa67c0');
+    await actx.audioWorklet.addModule('worklet.js?v=f9073211');
     node = new AudioWorkletNode(actx, 'seam', { numberOfInputs: 0, outputChannelCount: [2] });
     node.port.onmessage = e => onAudio(e.data);
     node.connect(actx.destination);
@@ -172,6 +172,9 @@ function renderLegend() {
     li.onclick = () => setChannel(c.key);
     $('#legendList').append(li);
   }
+  $('#legendHint').textContent = T(ui.channel ? 'chanHint1' : 'chanHint0');
+  $('#legendHint').classList.toggle('go', !!ui.channel);
+  el.querySelector('h4').title = T('chanDrag');
 }
 
 // ---------- 播放 ----------
@@ -182,7 +185,7 @@ function finalStop(l) {
   const coda = to.part === 'victory' || to.part === 'defeat';
   return { block: to.id, bars: coda ? to.bars : Math.min(2, to.bars) };
 }
-function start(msg, what) { ui.userStopped = false; ui.lastPlay = msg; send(msg); log('play', what); }
+function start(msg, what) { ui.userStopped = false; ui.chainFresh = false; ui.lastPlay = msg; send(msg); log('play', what); }
 function audition(l) {
   ui.selLink = l.id;
   start({ t: 'play', block: l.from, bar: startBar(l), links: [l.id], stop: finalStop(l) }, { kind: 'link', link: describe(l, 'zh'), id: l.id });
@@ -218,6 +221,7 @@ function chainChanged() {
   const e = chainEnd();
   $('#chainBox').hidden = !ui.chain.length; $('#chainN').textContent = ui.chain.length;
   if (ui.chain.length && e) { ui.sel = e.block; ui.channel = null; chans = channelsOf(e.block); renderLegend(); }
+  ui.chainFresh = ui.chain.length > 0;   // 路径刚改过：空格键播这条路径，而不是重播上一次的内容
   ui.pendingExit = null; updateStatus(); dirty = true;
   log('chain', { n: ui.chain.length });
 }
@@ -733,7 +737,7 @@ $('#edReset').onclick = () => {
 };
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && e.target.type !== 'range') return;
-  if (e.code === 'Space') { e.preventDefault(); if (play.playing) stopAll(); else if (ui.lastPlay) start(ui.lastPlay, { kind: 'replay' }); else if (ui.sel != null) playBlock(byId.get(ui.sel)); }
+  if (e.code === 'Space') { e.preventDefault(); if (play.playing) stopAll(); else if (ui.chainFresh && ui.chain.length) playChain(); else if (ui.lastPlay) start(ui.lastPlay, { kind: 'replay' }); else if (ui.sel != null) playBlock(byId.get(ui.sel)); }
   else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
   else if (e.key === 'Delete' || e.key === 'Backspace') { if (ed.block && ed.sel >= 0) removeNote(ed.sel); else if (ui.selLink != null) deleteLink(ui.selLink); }
   else if (e.key === 'Escape') { if (!$('#help').hidden) $('#help').hidden = true; else if (ed.block) { closeEditor(); dirty = true; } else if (ui.chain.length) { ui.chain = []; chainChanged(); } else select(null); }
@@ -752,7 +756,7 @@ function frame() {
   requestAnimationFrame(frame);
 }
 (async () => {
-  const txt = await (await fetch('bank.json?v=dafa67c0')).text();
+  const txt = await (await fetch('bank.json?v=f9073211')).text();
   pristine = txt; bank = JSON.parse(txt);
   restore(); index(); layout(); applyLang(); resize();
   view.k = Math.max(0.55, Math.min(1, (W - 40) / (16 * BW + 2 * X0))); view.x = 20; view.y = 6;

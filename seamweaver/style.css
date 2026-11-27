@@ -46,6 +46,9 @@ input[type=range] { width: 92px; accent-color: var(--accent); }
 #legend li.on { background: rgba(255,255,255,.1); }
 #legend li.off { opacity: .38; }
 #legend i { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+#legend { max-width: 250px; }
+#legendHint { margin: 0; padding: 8px 12px 10px; border-top: 1px solid var(--line2); font-size: 11.5px; line-height: 1.55; color: var(--dim); }
+#legendHint.go { color: var(--accent); }
 #legend em { font-style: normal; color: var(--dim); margin-left: auto; padding-left: 12px; font-variant-numeric: tabular-nums; font-size: 12px; }
 
 #editor { height: 46%; min-height: 260px; background: var(--panel); border-top: 1px solid var(--line2); display: flex; flex-direction: column; }
