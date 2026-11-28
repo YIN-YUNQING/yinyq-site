@@ -1,4 +1,4 @@
-import { T, N, lang, setLang, LANGS } from './i18n.js?v=f9073211';
+import { T, N, lang, setLang, LANGS } from './i18n.js?v=38c2a31b';
 
 // 切换工作站 · 网页版。读同一个音乐包（bank.json），能看切换图、试听连线、连播、改连线、改音符。
 // 所有改动只存在这台浏览器里（localStorage），问卷页会把改动和操作记录一起带走。
@@ -13,10 +13,10 @@ const DRUMS = [49, 46, 42, 38, 37, 41, 36];
 
 let bank, pristine, byId = new Map(), from = new Map(), linkById = new Map(), pos = new Map(), groups = [];
 const view = { x: 20, y: 20, k: 0.7 };
-const ui = { sel: null, channel: null, chain: [], selLink: null, hoverLink: null, hoverBlock: null, preRoll: 1, loop: false, thickness: 1, drag: null, lastPlay: null, pendingExit: null, userStopped: true };
+const ui = { linkClick: (() => { try { return localStorage.getItem('seam.linkClick') !== '0'; } catch { return true; } })(), sel: null, channel: null, chain: [], selLink: null, hoverLink: null, hoverBlock: null, preRoll: 1, loop: false, thickness: 1, drag: null, lastPlay: null, pendingExit: null, userStopped: true };
 const play = { playing: false, blockId: -1, step: 0, bpm: 120, at: 0 };
 let dirty = true;
-const changed = new Set(); let linksChanged = false; const undoStack = [];
+const changed = new Set(); let linksChanged = false; const undoStack = [], redoStack = [];
 
 // ---------- 操作记录 ----------
 const t0 = Date.now(); let logBuf = [];
@@ -33,17 +33,20 @@ let actx = null, node = null, audioP = null;
 function ensureAudio() {
   if (audioP) { if (actx && actx.state !== 'running') actx.resume(); return audioP; }
   audioP = (async () => {
-    actx = new AudioContext({ sampleRate: 48000, latencyHint: 'balanced' });   // 不追求最低延迟：缓冲大一点，机器忙的时候不容易爆音
-    await actx.audioWorklet.addModule('worklet.js?v=f9073211');
-    node = new AudioWorkletNode(actx, 'seam', { numberOfInputs: 0, outputChannelCount: [2] });
-    node.port.onmessage = e => onAudio(e.data);
-    node.connect(actx.destination);
-    node.port.postMessage({ t: 'bank', bank, thickness: ui.thickness });
-    if (actx.state !== 'running') await actx.resume();
+    const ctx = new AudioContext({ sampleRate: 48000, latencyHint: 'balanced' });   // 不追求最低延迟：缓冲大一点，机器忙的时候不容易爆音
+    actx = ctx;
+    await ctx.audioWorklet.addModule('worklet.js?v=38c2a31b');
+    if (actx !== ctx) return;      // 还没建好就被 rebuildAudio 换掉了（正好在这时换了输出设备）：这一条作废
+    const n = new AudioWorkletNode(ctx, 'seam', { numberOfInputs: 0, outputChannelCount: [2] });
+    n.port.onmessage = e => { if (node === n) onAudio(e.data); };
+    n.connect(ctx.destination);
+    n.port.postMessage({ t: 'bank', bank, thickness: ui.thickness });
+    node = n;
+    if (ctx.state !== 'running') await ctx.resume();
   })();
   return audioP;
 }
-function send(m) { ensureAudio().then(() => node.port.postMessage(m)); }
+function send(m) { ensureAudio().then(() => { if (node) node.port.postMessage(m); }).catch(() => {}); }
 // 换了耳机 / 音箱之后，旧的音频通道有时会一直失真到刷新网页为止：这里直接重建一条。
 function rebuildAudio(why) {
   if (!actx) return;
@@ -172,8 +175,9 @@ function renderLegend() {
     li.onclick = () => setChannel(c.key);
     $('#legendList').append(li);
   }
-  $('#legendHint').textContent = T(ui.channel ? 'chanHint1' : 'chanHint0');
-  $('#legendHint').classList.toggle('go', !!ui.channel);
+  $('#legendHint').textContent = T(!ui.linkClick ? 'chanHintOff' : ui.channel ? 'chanHint1' : 'chanHint0');
+  $('#legendHint').classList.toggle('go', !!ui.channel && ui.linkClick);
+  $('#linkClick').checked = ui.linkClick; $('#linkClickBox').title = T('linkClickTip');
   el.querySelector('h4').title = T('chanDrag');
 }
 
@@ -265,7 +269,7 @@ function addLink(fromId, exitBar, toId) {
   else if (f.role === 'theme' && to.role === 'theme') { ev = '换区'; if (exitBar >= 0) entryBar = (exitBar + 1) % to.bars; }
   else if (f.role === 'boss' && to.role === 'boss' && /^p\d/.test(to.part)) { ev = '转阶段'; stinger = 1; if (exitBar >= 0) entryBar = (exitBar + 1) % to.bars; }
   else if (to.part === 'victory') ev = '胜利'; else if (to.part === 'defeat') ev = '失败'; else if (to.role === 'theme') ev = '回探索';
-  undoStack.push({ type: 'links', prev: bank.links.map(({ _c, ...r }) => r) });
+  pushUndo({ type: 'links', prev: bank.links.map(({ _c, ...r }) => r) });
   const l = { id: Math.max(0, ...bank.links.map(x => x.id), ...bank.blocks.map(x => x.id)) + 1, from: fromId, exitBar, to: toId, entryBar, ev, stinger };
   bank.links.push(l);
   commitLinks(T('linkAdded'));
@@ -274,17 +278,38 @@ function addLink(fromId, exitBar, toId) {
 }
 function deleteLink(id) {
   const l = linkById.get(id); if (!l) return;
-  undoStack.push({ type: 'links', prev: bank.links.map(({ _c, ...r }) => r) });
+  pushUndo({ type: 'links', prev: bank.links.map(({ _c, ...r }) => r) });
   log('deleteLink', { link: describe(l, 'zh') });
   bank.links = bank.links.filter(x => x.id !== id);
   ui.selLink = null; commitLinks(T('linkDeleted'));
 }
-function undo() {
-  const u = undoStack.pop(); if (!u) return;
-  if (u.type === 'links') { bank.links = u.prev; commitLinks(); }
-  else { const b = byId.get(u.block); b.tracks[u.ti].notes = u.prev; commitBlock(b, true); if (ed.block === b) loadNotes(); }
-  log('undo', { type: u.type });
+// 撤销 / 重做：连线、音符、拖动方块三种改动各记一条。每条存的是"改之前的样子"，
+// 撤销时先把现在的样子记到另一个栈里，所以重做就是反过来再做一次。
+function pushUndo(u) { undoStack.push(u); redoStack.length = 0; updateUndoButtons(); }
+function currentOf(u) {
+  if (u.type === 'links') return { type: 'links', prev: bank.links.map(({ _c, ...r }) => r) };
+  if (u.type === 'move') { const p = pos.get(u.id); return { type: 'move', id: u.id, prev: [p.x, p.y], wasMoved: moved.has(u.id) }; }
+  return { type: 'notes', block: u.block, ti: u.ti, prev: byId.get(u.block).tracks[u.ti].notes.slice() };
 }
+function applyState(u) {
+  if (u.type === 'links') { bank.links = u.prev; commitLinks(); }
+  else if (u.type === 'move') {
+    const p = pos.get(u.id); p.x = u.prev[0]; p.y = u.prev[1];
+    if (u.wasMoved) moved.add(u.id); else moved.delete(u.id);
+    for (const l of bank.links) if (l.from === u.id || l.to === u.id) delete l._c;
+    savePos(); dirty = true;
+  }
+  else { const b = byId.get(u.block); b.tracks[u.ti].notes = u.prev; commitBlock(b, true); if (ed.block === b) loadNotes(); }
+}
+function step(fromStack, toStack, name) {
+  const u = fromStack.pop(); if (!u) return;
+  if ((u.type === 'move' && !pos.get(u.id)) || (u.type === 'notes' && !byId.get(u.block))) { updateUndoButtons(); return; }
+  toStack.push(currentOf(u)); applyState(u); updateUndoButtons();
+  log(name, { type: u.type });
+}
+function undo() { step(undoStack, redoStack, 'undo'); }
+function redo() { step(redoStack, undoStack, 'redo'); }
+function updateUndoButtons() { $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length; }
 function commitBlock(b, fromUndo) {
   changed.add(b.id);
   if (node) node.port.postMessage({ t: 'block', block: b });
@@ -292,7 +317,7 @@ function commitBlock(b, fromUndo) {
 }
 function resetAll() {
   if (!confirm(T('confirmReset'))) return;
-  bank = JSON.parse(pristine); changed.clear(); linksChanged = false; undoStack.length = 0;
+  bank = JSON.parse(pristine); changed.clear(); linksChanged = false; undoStack.length = 0; redoStack.length = 0; updateUndoButtons();
   try { localStorage.removeItem('seam.edits.v1'); localStorage.removeItem('seam.pos.v1'); } catch {}
   moved.clear();
   index(); layout(); ui.chain = []; closeEditor(); select(null); chainChanged();
@@ -454,7 +479,7 @@ function hit(w) {
     }
   }
   const tol = 7 / k; let best = null, bd = tol;
-  const cand = [...activeLinks(), ...ui.chain.map(id => linkById.get(id)).filter(Boolean)];
+  const cand = ui.linkClick ? [...activeLinks(), ...ui.chain.map(id => linkById.get(id)).filter(Boolean)] : [];   // 「点连线」关着时连线点不到
   for (const l of cand) { const c = curve(l); if (!c) continue; for (const pt of c.pts) { const d = Math.hypot(pt.x - w.x, pt.y - w.y); if (d < bd) { bd = d; best = l; } } }
   for (const b of bank.blocks) {
     const p = pos.get(b.id); if (!p) continue;
@@ -502,7 +527,7 @@ cv.addEventListener('pointerup', e => {
     if (d.moved && h.block && (h.type === 'block' || h.type === 'playbtn' || h.type === 'pen')) addLink(dr.from, dr.exitBar, h.block.id);
     return;
   }
-  if (d.moved) { if (d.move) { moved.add(d.move.id); savePos(); log('moveBlock', { block: byId.get(d.move.id).name }); } return; }
+  if (d.moved) { if (d.move) { const m = d.move; pushUndo({ type: 'move', id: m.id, prev: [m.px, m.py], wasMoved: moved.has(m.id) }); moved.add(m.id); savePos(); log('moveBlock', { block: byId.get(m.id).name }); } return; }
   const h = d.h;
   if (h.type === 'playbtn') { if (play.playing && play.blockId === h.block.id) stopAll(); else playBlock(h.block); }
   else if (h.type === 'pen') openEditor(h.block);
@@ -631,7 +656,7 @@ function noteAt(a) {
 }
 function commitNotes(prev) {
   const t = ed.block.tracks[ed.ti];
-  undoStack.push({ type: 'notes', block: ed.block.id, ti: ed.ti, prev });
+  pushUndo({ type: 'notes', block: ed.block.id, ti: ed.ti, prev });
   const sorted = ed.notes.map((n, i) => ({ n, i })).sort((a, b) => a.n[1] - b.n[1] || a.i - b.i);
   const selNote = ed.sel >= 0 ? ed.notes[ed.sel] : null;
   ed.notes = sorted.map(s => s.n); ed.sel = selNote ? ed.notes.indexOf(selNote) : -1;
@@ -723,6 +748,9 @@ $('#thick').onchange = () => log('thickness', { value: ui.thickness });
 $('#btnChain').onclick = playChain;
 $('#btnChainClear').onclick = () => { ui.chain = []; chainChanged(); };
 $('#btnUndo').onclick = undo;
+$('#linkClick').onchange = e => { ui.linkClick = e.target.checked; try { localStorage.setItem('seam.linkClick', ui.linkClick ? '1' : '0'); } catch {} ui.hoverLink = null; renderLegend(); dirty = true; log('linkClick', { on: ui.linkClick }); e.target.blur(); };
+$('#linkClickBox').addEventListener('pointerdown', e => e.stopPropagation());
+$('#btnRedo').onclick = redo;
 $('#btnReset').onclick = resetAll;
 $('#btnHelp').onclick = () => { $('#help').hidden = false; log('help'); };
 $('#helpOk').onclick = () => { $('#help').hidden = true; try { localStorage.setItem('seam.helped', '1'); } catch {} ensureAudio(); };
@@ -738,7 +766,8 @@ $('#edReset').onclick = () => {
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && e.target.type !== 'range') return;
   if (e.code === 'Space') { e.preventDefault(); if (play.playing) stopAll(); else if (ui.chainFresh && ui.chain.length) playChain(); else if (ui.lastPlay) start(ui.lastPlay, { kind: 'replay' }); else if (ui.sel != null) playBlock(byId.get(ui.sel)); }
-  else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+  else if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
   else if (e.key === 'Delete' || e.key === 'Backspace') { if (ed.block && ed.sel >= 0) removeNote(ed.sel); else if (ui.selLink != null) deleteLink(ui.selLink); }
   else if (e.key === 'Escape') { if (!$('#help').hidden) $('#help').hidden = true; else if (ed.block) { closeEditor(); dirty = true; } else if (ui.chain.length) { ui.chain = []; chainChanged(); } else select(null); }
 });
@@ -756,12 +785,12 @@ function frame() {
   requestAnimationFrame(frame);
 }
 (async () => {
-  const txt = await (await fetch('bank.json?v=f9073211')).text();
+  const txt = await (await fetch('bank.json?v=38c2a31b')).text();
   pristine = txt; bank = JSON.parse(txt);
-  restore(); index(); layout(); applyLang(); resize();
+  restore(); index(); layout(); applyLang(); resize(); updateUndoButtons();
   view.k = Math.max(0.55, Math.min(1, (W - 40) / (16 * BW + 2 * X0))); view.x = 20; view.y = 6;
   try { if (!localStorage.getItem('seam.helped')) $('#help').hidden = false; } catch {}
   log('open', { w: innerWidth, h: innerHeight, lang: lang(), ua: navigator.userAgent });
-  window.__seam = { bank: () => bank, ui, play, view, select, audition, addLink, deleteLink, openEditor, log: () => logBuf, pos: () => pos, playChain, toggleChain, chainTo };
+  window.__seam = { undo, redo, stacks: () => [undoStack.length, redoStack.length], bank: () => bank, ui, play, view, select, audition, addLink, deleteLink, openEditor, log: () => logBuf, pos: () => pos, playChain, toggleChain, chainTo };
   requestAnimationFrame(frame);
 })();

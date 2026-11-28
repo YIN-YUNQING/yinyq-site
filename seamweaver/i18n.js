@@ -2,8 +2,8 @@
 const S = {
   zh: {
     stop: '停止', play: '播放', preroll: '从出口前', prerollUnit: '小节听起', loop: '循环试听', thickness: '配器厚度',
-    chain: '连播', clear: '清空', undo: '撤销', reset: '全部还原', help: '怎么用', survey: '任务与问卷',
-    channels: '从这里可以去', chanHint0: '每一行是一个去处，×16 表示有 16 条连线通向那里。点一行，只留下这一组连线。', chanHint1: '现在点画布上一条亮着的连线，就能试听这次切换。再点一次这一行，恢复显示全部。', chanDrag: '拖这里可以把框挪开', loopSelf: '循环（回到自己）', bridgeTo: '接口 → ', viaBridge: '经接口', bars: '小节', bar: '第 {n} 小节', tail: '曲尾',
+    chain: '连播', clear: '清空', undo: '撤销', redo: '重做', reset: '全部还原', help: '怎么用', survey: '任务与问卷',
+    channels: '从这里可以去', linkClick: '点连线', linkClickTip: '开：可以直接点连线试听。关：连线点不到，只靠按住 Alt 点方块或小节来排路径。', chanHintOff: '「点连线」关着：连线现在点不到。按住 Alt 依次点要去的方块或小节排出一条路径，再按「连播」。', chanHint0: '每一行是一个去处，×16 表示有 16 条连线通向那里。点一行，只留下这一组连线。', chanHint1: '现在点画布上一条亮着的连线，就能试听这次切换。再点一次这一行，恢复显示全部。', chanDrag: '拖这里可以把框挪开', loopSelf: '循环（回到自己）', bridgeTo: '接口 → ', viaBridge: '经接口', bars: '小节', bar: '第 {n} 小节', tail: '曲尾',
     idle: '点一个方块，看它能切到哪里', nowPlaying: '正在播放', selLink: '连线', deleteLink: '删除这条连线', linkDeleted: '已删除连线', linkAdded: '已添加连线',
     hintSelected: '点彩色连线试听切换 · 按住 Alt 依次点连线或目标方块 = 选一条路径 · 从小节下方的圆点拖到别的方块 = 新连线',
     hintChannel: '只显示这一条通道 · 点空白处取消', hintChain: '已选 {n} 段路径 · 点「连播」或按空格键一口气听完',
@@ -26,8 +26,8 @@ const S = {
   },
   ja: {
     stop: '停止', play: '再生', preroll: '出口の', prerollUnit: '小節前から聴く', loop: 'ループ試聴', thickness: '編成の厚み',
-    chain: '連続再生', clear: 'クリア', undo: '元に戻す', reset: 'すべて初期化', help: '使い方', survey: '課題とアンケート',
-    channels: 'ここからの行き先', chanHint0: '1 行が 1 つの行き先です。×16 は、そこへ向かう接続線が 16 本あるという意味です。行をクリックすると、その接続線だけが残ります。', chanHint1: '明るく表示されている接続線をクリックすると、その切り替えを試聴できます。同じ行をもう一度クリックすると、すべての表示に戻ります。', chanDrag: 'ここをドラッグすると移動できます', loopSelf: 'ループ（自分に戻る）', bridgeTo: 'ブリッジ → ', viaBridge: 'ブリッジ経由', bars: '小節', bar: '第 {n} 小節', tail: '曲の終わり',
+    chain: '連続再生', clear: 'クリア', undo: '元に戻す', redo: 'やり直す', reset: 'すべて初期化', help: '使い方', survey: '課題とアンケート',
+    channels: 'ここからの行き先', linkClick: '線をクリック', linkClickTip: 'オン：接続線を直接クリックして試聴できます。オフ：接続線はクリックできず、Alt を押しながらブロックや小節をクリックして経路を作ります。', chanHintOff: '「線をクリック」がオフです。接続線はクリックできません。Alt を押しながら行き先のブロックや小節を順にクリックして経路を作り、「連続再生」を押してください。', chanHint0: '1 行が 1 つの行き先です。×16 は、そこへ向かう接続線が 16 本あるという意味です。行をクリックすると、その接続線だけが残ります。', chanHint1: '明るく表示されている接続線をクリックすると、その切り替えを試聴できます。同じ行をもう一度クリックすると、すべての表示に戻ります。', chanDrag: 'ここをドラッグすると移動できます', loopSelf: 'ループ（自分に戻る）', bridgeTo: 'ブリッジ → ', viaBridge: 'ブリッジ経由', bars: '小節', bar: '第 {n} 小節', tail: '曲の終わり',
     idle: 'ブロックをクリックすると、切り替え先が表示されます', nowPlaying: '再生中', selLink: '接続', deleteLink: 'この接続を削除', linkDeleted: '接続を削除しました', linkAdded: '接続を追加しました',
     hintSelected: '色付きの線をクリックで切り替えを試聴 · Alt を押しながら線や行き先を順にクリック = 経路を選択 · 小節の下の丸を別のブロックへドラッグ = 新しい接続',
     hintChannel: 'この経路だけを表示中 · 空白をクリックで解除', hintChain: '{n} 区間を選択中 ·「連続再生」またはスペースキーで通して聴く',
@@ -50,8 +50,8 @@ const S = {
   },
   en: {
     stop: 'Stop', play: 'Play', preroll: 'Start', prerollUnit: 'bar(s) before the exit', loop: 'Loop audition', thickness: 'Arrangement density',
-    chain: 'Play path', clear: 'Clear', undo: 'Undo', reset: 'Reset all', help: 'How to use', survey: 'Tasks & survey',
-    channels: 'From here you can go to', chanHint0: 'Each row is one destination; ×16 means 16 links lead there. Click a row to keep only those links.', chanHint1: 'Now click one of the highlighted links on the canvas to hear that transition. Click the row again to show everything.', chanDrag: 'Drag here to move this panel', loopSelf: 'Loop (back to itself)', bridgeTo: 'Bridge → ', viaBridge: 'via bridge', bars: 'bars', bar: 'bar {n}', tail: 'end',
+    chain: 'Play path', clear: 'Clear', undo: 'Undo', redo: 'Redo', reset: 'Reset all', help: 'How to use', survey: 'Tasks & survey',
+    channels: 'From here you can go to', linkClick: 'Click links', linkClickTip: 'On: click a link directly to audition it. Off: links cannot be clicked; build a path by Alt-clicking blocks or bars.', chanHintOff: '"Click links" is off, so links cannot be clicked. Alt-click the blocks or bars you want to go to, in order, to build a path, then press "Play path".', chanHint0: 'Each row is one destination; ×16 means 16 links lead there. Click a row to keep only those links.', chanHint1: 'Now click one of the highlighted links on the canvas to hear that transition. Click the row again to show everything.', chanDrag: 'Drag here to move this panel', loopSelf: 'Loop (back to itself)', bridgeTo: 'Bridge → ', viaBridge: 'via bridge', bars: 'bars', bar: 'bar {n}', tail: 'end',
     idle: 'Click a block to see where it can switch to', nowPlaying: 'Now playing', selLink: 'Link', deleteLink: 'Delete this link', linkDeleted: 'Link deleted', linkAdded: 'Link added',
     hintSelected: 'Click a coloured link to audition the switch · Alt-click links or target blocks in order = build a path · Drag from the dot under a bar onto another block = new link',
     hintChannel: 'Showing this route only · click empty space to cancel', hintChain: '{n} segment(s) selected · press “Play path” or the space bar to hear them in one go',

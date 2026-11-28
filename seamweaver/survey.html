@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>SeamStation · 任务与问卷</title>
-<link rel="stylesheet" href="style.css?v=dafa67c0">
+<link rel="stylesheet" href="style.css?v=38c2a31b">
 <style>
   html, body { overflow: auto; height: auto; }
   body { background: var(--bg); }
@@ -49,91 +49,164 @@
 <div class="wrap" id="root"></div>
 <script type="module">
 // 任务与问卷。答案自动暂存在这台浏览器里；提交 = 下载一个 JSON 文件（含答案、操作记录、你做的修改），再发给研究者。
-// 注意：任务内容、知情同意的文字、联系方式都还是草稿，正式施测前要由研究者定稿。SUS 的中文 / 日文是自译，正式使用应换成已验证的译本。
+
+// ===== 研究者填写：这里的内容会原样显示在"参加说明"里。空着的项会显示成【待填写】，填完之前不要发给被试。=====
+const STUDY = {
+  researcher: '',        // 研究者姓名
+  affiliation: '',       // 所属（学校、研究科）
+  contact: '',           // 联系邮箱
+  supervisor: '',        // 指导教师（没有就留空，这一行不显示）
+  ethics: { zh: '', ja: '', en: '' },          // 伦理审查的情况，如"本研究已通过××大学研究伦理审查（编号 ×××）"
+  compensation: { zh: '', ja: '', en: '' },    // 报酬；留空 = 显示"本研究不提供报酬"
+  retentionYears: 5,     // 数据保存年数
+  storage: 'server',     // 'server' = 存在研究者自己的服务器上（relay/部署步骤_自有服务器.md）；'github' = 经 Cloudflare 存到私有 GitHub 仓库（relay/部署步骤.md）。只影响同意书里的说明文字
+  submitUrl: 'https://survey-api.yinyq.net/', // 接收服务的地址。填了 = 页面上出现"提交"按钮，同意书里关于保存的那一段也会换成联网保存的版本；空着 = 只能下载文件
+};
+// SUS 的中文 / 日文是自译；正式使用前应对照已发表的译本。
+// 本机调试用：在 localhost 上可以用 ?relay=地址 临时指定中转服务（线上不生效）。
+if (['localhost', '127.0.0.1'].includes(location.hostname)) STUDY.submitUrl = new URLSearchParams(location.search).get('relay') || STUDY.submitUrl;
+
 const L = {
   zh: {
-    title: '任务与问卷', back: '← 回到工作站', intro: '感谢参加。整个过程大约 30–40 分钟：先在工作站里完成几个小任务，再回答下面的问题。你的答案会自动暂存，刷新不会丢。',
-    consentH: '参加说明', consentP: '本研究考察一个给作曲者使用的"音乐切换"编辑工具。我们会记录：你在本页填写的答案、你在工作站里的操作（点了什么、什么时候点的）、你对连线和音符做的修改。不记录姓名、录音或屏幕画面。你可以随时停止，不需要说明理由。【研究者姓名、所属与联系方式：待填写】',
-    consent: '我已阅读上面的说明，自愿参加，并同意按上述方式使用我的数据。', code: '参与者编号（自动生成，请不要改成姓名）',
-    bgH: '关于你', role: '你的身份（可多选）', roles: ['作曲', '编曲', '音响 / 声音设计', '游戏开发', '学生', '其他'],
+    title: '任务与问卷', back: '← 回到工作站', todo: '【待填写：{x}】',
+    intro: '感谢你考虑参加本研究。请先阅读下面的说明；同意后，在工作站里完成 5 个小任务，再回答问卷。你的答案会自动暂存在这台电脑的浏览器里，刷新不会丢。',
+    consentH: '参加说明与同意',
+    c: [
+      ['研究目的', '本研究考察一个供作曲者使用的软件工具。它用来编辑"音乐的切换"：在游戏等互动媒体里，一段音乐在什么位置、以什么方式接到另一段。我们想了解它是否容易使用，对创作判断有没有帮助。'],
+      ['你需要做什么', '在网页上使用这个工具完成 5 个小任务，然后回答问卷，全程约 30–40 分钟。需要一台电脑，以及耳机或音箱。开始前请把音量调到舒适的大小。'],
+      ['我们记录什么', '（1）你在本页填写的答案；（2）你在工具里的操作记录：点了什么、在什么时间；（3）你对连线和音符做的修改；（4）浏览器类型和窗口大小。我们不记录你的姓名、邮箱、声音或屏幕画面。'],
+      ['风险与报酬', '参加本研究没有超出日常使用电脑的风险。{comp}'],
+      ['自愿参加与退出', '参加完全出于自愿。提交之前，你可以随时关闭网页退出，不需要说明理由；已填的内容只留在你自己的浏览器里，点页面底部的"清空重填"即可删除。提交之后如果想撤回，请在研究结果发表之前把你的参与者编号告诉研究者，我们会删除你的全部数据。不参加或中途退出不会给你带来任何不利。'],
+      ['数据的保存与使用', '数据只用参与者编号标识，保存在研究者有密码保护的设备上，研究结束后保存 {years} 年，之后删除。结果会以汇总的形式用于学术论文和报告；你写下的文字可能被匿名引用。'],
+      ['联系方式', '研究者：{researcher}（{affiliation}）{supervisor}。如有任何疑问，请联系：{contact}。'],
+      ['伦理审查', '{ethics}'],
+    ],
+    storeOnline: '点击"提交"后，你的数据会通过互联网发送并保存：经由 Cloudflare 公司的服务器中转，存放在 GitHub 公司的一个只有研究者能访问的私有存储库中（两家公司的服务器都位于日本境外）。数据只用参与者编号标识，文件中不写入你的 IP 地址。研究者会把数据另存到有密码保护的设备上，研究结束后保存 {years} 年，之后从设备和存储库中一并删除。结果会以汇总的形式用于学术论文和报告；你写下的文字可能被匿名引用。',
+    storeServer: '点击"提交"后，你的数据会通过加密连接发送到研究者管理的一台服务器上保存（阿里云，位于日本东京）。数据只用参与者编号标识，服务器不记录、也不在文件中写入你的 IP 地址。研究者会把数据转存到有密码保护的设备上，研究结束后保存 {years} 年，之后删除；服务器上的副本在数据收集结束后即删除。结果会以汇总的形式用于学术论文和报告；你写下的文字可能被匿名引用。',
+    send: '提交', sending: '正在提交…', sent: '已提交，谢谢你的参加。你的参与者编号是 {code}，如需撤回数据请凭它联系研究者。现在可以关闭页面了。', sendFail: '提交没有成功（{why}）。请点"下载结果文件"，把文件发给研究者。', submitP2: '点击"提交"后，你的答案、你在工作站里的操作记录、你做的修改会发送给研究者。如果提交不成功，可以改为下载文件再发给研究者。',
+    comp0: '本研究不提供报酬。', supervisor: '；指导教师：{x}', xResearcher: '研究者姓名', xAff: '所属', xContact: '联系邮箱', xEthics: '伦理审查情况',
+    age: '我已年满 18 岁。', consent: '我已阅读并理解上面的说明，自愿参加本研究。', quote: '我同意研究者在论文中匿名引用我写下的文字。（可选）',
+    code: '参与者编号（自动生成。请记下它，撤回数据时要用；请不要改成姓名）',
+    bgH: '一、关于你', role: '你的身份（可多选）', roles: ['作曲', '编曲', '音响 / 声音设计', '游戏开发', '学生', '其他'],
     years: '作曲或编曲的年数', game: '游戏音乐方面的经验', games: ['没有', '学习过或自己尝试过', '参与过实际项目'],
     tools: '用过的工具（可多选）', toolList: ['Cubase / Logic / Live 等 DAW', 'Wwise', 'FMOD', '其他游戏音频中间件', '游戏引擎自带的音频功能', '都没用过'],
-    fam: '你对"随玩家行动切换的音乐"（互动音乐）有多熟悉？', famLo: '完全不了解', famHi: '非常熟悉',
-    taskH: '任务', taskP: '请在另一个标签页打开工作站，依次完成。做不出来也没关系，照实填写即可。',
+    fam: '你对"随玩家行动而切换的音乐"（互动音乐）有多熟悉？', famLo: '完全不了解', famHi: '非常熟悉',
+    listen: '你现在用什么听声音？', listens: ['耳机', '外接音箱', '电脑自带的扬声器'],
+    taskH: '二、任务', taskP: '请在另一个标签页打开工作站（左上角的按钮），按顺序完成。做不出来也没关系，照实填写即可；这里考察的是工具，不是你。',
     tasks: [
       ['试听一次切换', '找到"主题曲 4/4"第 6 小节切到《摇篮曲》的那条连线，试听它。'],
-      ['比较两次切换', '在"主题曲 3/4"里任选两个不同的小节，分别试听它们切到《星形舞曲》的效果。哪一个你觉得更顺？请在下面写下小节号和理由。'],
-      ['修改一个过渡', '选一个你觉得不够顺的过渡小节（接口），打开它的钢琴卷帘，把旋律改到你满意为止。请写下你改了哪一个、怎么改的。'],
+      ['比较两次切换', '在"主题曲 3/4"里任选两个不同的小节，分别试听它们切到《星形舞曲》的效果。你觉得哪一个更顺？请在下面写下两个小节号和你的理由。'],
+      ['修改一个过渡', '选一个你觉得不够顺的过渡小节（接口），打开它的钢琴卷帘，把旋律改到你满意为止。请写下你改的是哪一个、怎么改的、为什么。'],
       ['排一条路径', '排出这样一条路径并连播：从"主题曲 4/4"换到另一个区域的主题曲，再从那里开战。'],
-      ['改一条连线', '新建一条原来没有的连线，试听它；然后删掉它。'],
+      ['改一条连线', '新建一条原来没有的连线并试听；然后把它删掉。'],
     ],
-    st: '完成情况', sts: ['完成了', '完成了一部分', '没能完成'], diff: '难度', diffLo: '很容易', diffHi: '很难', note: '补充说明（做法、卡在哪里、你的判断）',
-    susH: '使用感受', susP: '下面 10 句话，请按你的同意程度选择。1 = 完全不同意，5 = 完全同意。',
+    st: '完成情况', sts: ['完成了', '完成了一部分', '没能完成'], diff: '难度', diffLo: '很容易', diffHi: '很难', note: '说明（你的做法、卡在哪里、你的判断）',
+    toolH: '三、关于这个工具', toolP: '请按你的同意程度选择。1 = 完全不同意，7 = 完全同意。',
+    toolQ: ['我能看出一段音乐可以在哪些位置切到别的音乐。', '试听让我能够判断一次切换好不好。', '我能把过渡改成我想要的样子。', '我清楚自己做的修改会带来什么结果。', '使用过程中，我常常不知道下一步该做什么。', '我听到的切换常常和我预想的不一样。'],
+    susH: '四、整体使用感受', susP: '下面 10 句话里的"系统"指这个工具。1 = 完全不同意，5 = 完全同意。',
     sus: ['我想我会愿意经常使用这个系统。', '我觉得这个系统没必要这么复杂。', '我觉得这个系统容易使用。', '我想我需要专业人员的帮助才能使用这个系统。', '我觉得这个系统的各项功能整合得很好。', '我觉得这个系统里不一致的地方太多。', '我想大多数人能很快学会使用这个系统。', '我觉得这个系统用起来很笨重。', '使用这个系统时我很有把握。', '在能上手之前，我需要先学很多东西。'],
-    openH: '开放问题',
-    open: ['使用过程中，哪些地方对你有用？请具体说明。', '哪些地方让你困惑，或者妨碍了你想做的事？', '和你现在处理类似工作的方式相比，有哪些不同？', '如果要在真实项目里使用，它还缺什么？', '其他想说的。'],
+    openH: '五、开放问题',
+    open: ['使用过程中，哪些地方对你有用？请具体说明。', '哪些地方让你困惑，或者妨碍了你想做的事？', '如果你做过类似的工作（用 DAW、Wwise、FMOD 或别的方式）：同样的事你平时会怎么做？和这次相比有什么不同？没做过请跳过。', '如果要在真实项目里使用，它还缺什么？', '其他想说的。'],
     submitH: '提交', submitP: '点击下载后，请把下载的文件发给研究者。文件里包含：你的答案、你在工作站里的操作记录、你做的修改。',
-    dl: '下载结果文件', copy: '复制为文本', clear: '清空重填', need: '请先勾选"同意参加"。', done: '已下载。请把这个文件发给研究者，谢谢。', copied: '已复制到剪贴板。', sure: '清空所有答案？',
-    logInfo: '已记录的操作：{n} 条',
+    dl: '下载结果文件', dlAnyway: '仍然下载', copy: '复制为文本', clear: '清空重填', need: '请先勾选"已年满 18 岁"和"自愿参加"。', missing: '还有 {n} 项没有填：{list}。可以回去补上，或者再点一次直接下载。',
+    done: '已下载。请把这个文件发给研究者，谢谢你的参加。', copied: '已复制到剪贴板。', sure: '清空所有答案？', logInfo: '已记录的操作：{n} 条。',
   },
   ja: {
-    title: '課題とアンケート', back: '← ワークステーションに戻る', intro: 'ご参加ありがとうございます。所要時間は 30〜40 分ほどです。まずワークステーションでいくつかの課題を行い、そのあと下の質問にお答えください。回答は自動的に一時保存され、再読み込みしても消えません。',
-    consentH: '参加にあたって', consentP: '本研究は、作曲者向けの「音楽の切り替え」編集ツールを調べるものです。記録するのは、このページの回答、ワークステーションでの操作（何をいつクリックしたか）、接続や音符に加えた変更です。氏名、録音、画面の映像は記録しません。いつでも理由を述べずに中止できます。【研究者の氏名・所属・連絡先：未記入】',
-    consent: '上の説明を読み、自分の意思で参加し、上記のとおりデータが使われることに同意します。', code: '参加者番号（自動生成。氏名に書き換えないでください）',
-    bgH: 'あなたについて', role: '立場（複数選択可）', roles: ['作曲', '編曲', '音響・サウンドデザイン', 'ゲーム開発', '学生', 'その他'],
+    title: '課題とアンケート', back: '← ワークステーションに戻る', todo: '【未記入：{x}】',
+    intro: '本研究へのご参加をご検討いただき、ありがとうございます。まず下の説明をお読みください。同意いただけましたら、ワークステーションで 5 つの小さな課題を行い、そのあとアンケートにお答えください。回答はこのパソコンのブラウザに自動的に一時保存され、再読み込みしても消えません。',
+    consentH: '研究の説明と同意',
+    c: [
+      ['研究の目的', '本研究は、作曲者向けのソフトウェアツールを調べるものです。このツールは「音楽の切り替え」、つまりゲームなどのインタラクティブなメディアで、ある音楽がどの位置で、どのように別の音楽へつながるかを編集するためのものです。使いやすいかどうか、また創作上の判断に役立つかどうかを明らかにすることが目的です。'],
+      ['していただくこと', 'ウェブページ上でこのツールを使って 5 つの小さな課題を行い、そのあとアンケートにお答えいただきます。所要時間は 30〜40 分ほどです。パソコンと、ヘッドホンまたはスピーカーが必要です。始める前に、音量を無理のない大きさに調整してください。'],
+      ['記録する内容', '（1）このページの回答、（2）ツール上での操作の記録（何を、いつクリックしたか）、（3）接続や音符に加えた変更、（4）ブラウザの種類とウィンドウの大きさ。氏名、メールアドレス、音声、画面の映像は記録しません。'],
+      ['リスクと謝礼', '本研究への参加に、日常的なパソコンの使用を超えるリスクはありません。{comp}'],
+      ['参加の任意性と中止', '参加は完全に任意です。提出前であれば、理由を述べることなく、いつでもページを閉じて中止できます。入力済みの内容はご自身のブラウザにのみ残り、ページ下部の「すべて消去」で削除できます。提出後に撤回を希望される場合は、研究成果の公表前までに参加者番号を研究者にお知らせください。すべてのデータを削除します。参加しないこと、途中でやめることによって不利益を受けることは一切ありません。'],
+      ['データの保管と利用', 'データは参加者番号のみで識別し、パスワードで保護された研究者の機器に保管します。研究終了後 {years} 年間保管したのち、削除します。結果は集計したかたちで学術論文や報告に用います。お書きいただいた文章を匿名で引用することがあります。'],
+      ['連絡先', '研究者：{researcher}（{affiliation}）{supervisor}。ご質問は次の宛先までお願いします：{contact}。'],
+      ['倫理審査', '{ethics}'],
+    ],
+    storeOnline: '「提出」を押すと、データはインターネット経由で送信・保存されます。Cloudflare 社のサーバーを経由し、GitHub 社の、研究者だけがアクセスできる非公開のリポジトリに保存されます（両社のサーバーはいずれも日本国外にあります）。データは参加者番号のみで識別し、ファイルに IP アドレスは書き込みません。研究者はデータをパスワードで保護された機器にも保存し、研究終了後 {years} 年間保管したのち、機器とリポジトリの両方から削除します。結果は集計したかたちで学術論文や報告に用います。お書きいただいた文章を匿名で引用することがあります。',
+    storeServer: '「提出」を押すと、データは暗号化された通信で、研究者が管理するサーバー（Alibaba Cloud、東京）に送信・保存されます。データは参加者番号のみで識別し、サーバーは IP アドレスを記録せず、ファイルにも書き込みません。研究者はデータをパスワードで保護された機器に移して保管し、研究終了後 {years} 年間保管したのち削除します。サーバー上のデータは、データ収集の終了後すみやかに削除します。結果は集計したかたちで学術論文や報告に用います。お書きいただいた文章を匿名で引用することがあります。',
+    send: '提出', sending: '送信中…', sent: '提出しました。ご協力ありがとうございました。参加者番号は {code} です。データの撤回を希望される場合は、この番号を研究者にお知らせください。ページを閉じて構いません。', sendFail: '提出できませんでした（{why}）。「結果ファイルをダウンロード」を押して、ファイルを研究者にお送りください。', submitP2: '「提出」を押すと、回答、ワークステーションでの操作記録、加えた変更が研究者に送信されます。うまく提出できない場合は、ファイルをダウンロードして研究者にお送りください。',
+    comp0: '本研究では謝礼をお支払いしません。', supervisor: '、指導教員：{x}', xResearcher: '研究者氏名', xAff: '所属', xContact: '連絡先メールアドレス', xEthics: '倫理審査の状況',
+    age: '私は 18 歳以上です。', consent: '上の説明を読んで理解し、自分の意思で本研究に参加します。', quote: '私が書いた文章を、研究者が論文中で匿名で引用することに同意します。（任意）',
+    code: '参加者番号（自動生成。データの撤回に必要ですので控えておいてください。氏名には書き換えないでください）',
+    bgH: '1. あなたについて', role: '立場（複数選択可）', roles: ['作曲', '編曲', '音響・サウンドデザイン', 'ゲーム開発', '学生', 'その他'],
     years: '作曲・編曲の経験年数', game: 'ゲーム音楽の経験', games: ['ない', '学んだ、または自分で試したことがある', '実際のプロジェクトに参加したことがある'],
     tools: '使ったことのあるツール（複数選択可）', toolList: ['Cubase / Logic / Live などの DAW', 'Wwise', 'FMOD', 'その他のゲームオーディオ・ミドルウェア', 'ゲームエンジン標準のオーディオ機能', 'どれも使ったことがない'],
     fam: '「プレイヤーの行動に応じて切り替わる音楽」（インタラクティブ音楽）にどのくらい馴染みがありますか。', famLo: 'まったく知らない', famHi: 'よく知っている',
-    taskH: '課題', taskP: '別のタブでワークステーションを開き、順に行ってください。できなくても構いません。そのとおりに記入してください。',
+    listen: 'いま、何で音を聴いていますか。', listens: ['ヘッドホン・イヤホン', '外付けスピーカー', 'パソコン内蔵のスピーカー'],
+    taskH: '2. 課題', taskP: '別のタブでワークステーションを開き（左上のボタン）、順番に行ってください。できなくても構いません。そのとおりにご記入ください。調べているのはツールであって、あなたの能力ではありません。',
     tasks: [
       ['切り替えを 1 つ試聴する', '「テーマ曲 4/4」の第 6 小節から《子守歌》へ切り替わる接続を見つけて、試聴してください。'],
-      ['2 つの切り替えを比べる', '「テーマ曲 3/4」から異なる小節を 2 つ選び、それぞれ《星形の舞曲》へ切り替わる様子を試聴してください。どちらが自然に聞こえましたか。小節番号と理由を下に書いてください。'],
-      ['つなぎを 1 つ直す', '自然でないと感じたつなぎの小節（ブリッジ）を 1 つ選び、ピアノロールを開いて、納得がいくまで旋律を直してください。どれをどう直したかを書いてください。'],
+      ['2 つの切り替えを比べる', '「テーマ曲 3/4」から異なる小節を 2 つ選び、それぞれ《星形の舞曲》へ切り替わる様子を試聴してください。どちらがより自然に聞こえましたか。2 つの小節番号と理由を下にお書きください。'],
+      ['つなぎを 1 つ直す', '自然でないと感じたつなぎの小節（ブリッジ）を 1 つ選び、ピアノロールを開いて、納得がいくまで旋律を直してください。どれを、どのように、なぜ直したかをお書きください。'],
       ['経路を組む', '次のような経路を組んで連続再生してください：「テーマ曲 4/4」から別のエリアのテーマ曲へ移り、そこから戦闘を開始する。'],
-      ['接続を変更する', 'もともと無かった接続を 1 つ新しく作り、試聴してください。そのあと削除してください。'],
+      ['接続を変更する', 'もともと無かった接続を 1 つ新しく作って試聴し、そのあと削除してください。'],
     ],
-    st: '達成状況', sts: ['できた', '一部できた', 'できなかった'], diff: '難しさ', diffLo: 'とても簡単', diffHi: 'とても難しい', note: '補足（やり方、つまずいた点、あなたの判断）',
-    susH: '使ってみた印象', susP: '次の 10 の文について、どの程度そう思うかを選んでください。1 = まったくそう思わない、5 = とてもそう思う。',
+    st: '達成状況', sts: ['できた', '一部できた', 'できなかった'], diff: '難しさ', diffLo: 'とても簡単', diffHi: 'とても難しい', note: '説明（やり方、つまずいた点、あなたの判断）',
+    toolH: '3. このツールについて', toolP: 'どの程度そう思うかをお選びください。1 = まったくそう思わない、7 = とてもそう思う。',
+    toolQ: ['ある音楽がどの位置で別の音楽へ切り替えられるのかが分かった。', '試聴することで、切り替えの良し悪しを判断できた。', 'つなぎを自分の思うとおりに直すことができた。', '自分の加えた変更がどんな結果になるのか、はっきり分かった。', '使っているあいだ、次に何をすればよいか分からないことがよくあった。', '聞こえた切り替えは、予想していたものと違うことがよくあった。'],
+    susH: '4. 全体的な使用感', susP: '次の 10 の文の「システム」は、このツールを指します。1 = まったくそう思わない、5 = とてもそう思う。',
     sus: ['このシステムを頻繁に使いたいと思う。', 'このシステムは不必要に複雑だと感じた。', 'このシステムは使いやすいと思った。', 'このシステムを使うには、技術に詳しい人の助けが必要だと思う。', 'このシステムのさまざまな機能は、よくまとまっていると感じた。', 'このシステムには一貫性のないところが多すぎると思った。', 'たいていの人は、このシステムの使い方をすぐに覚えられると思う。', 'このシステムはとても扱いにくいと感じた。', 'このシステムを自信をもって使えた。', 'このシステムを使い始める前に、多くのことを学ぶ必要があった。'],
-    openH: '自由記述',
-    open: ['使っていて役に立ったのはどんな点ですか。具体的に教えてください。', '戸惑った点や、やりたいことの妨げになった点はありましたか。', '同じような作業をふだん行う方法と比べて、どんな違いがありましたか。', '実際のプロジェクトで使うには、何が足りませんか。', 'そのほか、ご意見があればお書きください。'],
-    submitH: '提出', submitP: 'ダウンロードしたファイルを研究者に送ってください。ファイルには、回答、ワークステーションでの操作記録、加えた変更が含まれます。',
-    dl: '結果ファイルをダウンロード', copy: 'テキストとしてコピー', clear: 'すべて消去', need: '先に「参加に同意」にチェックを入れてください。', done: 'ダウンロードしました。このファイルを研究者に送ってください。ありがとうございました。', copied: 'クリップボードにコピーしました。', sure: 'すべての回答を消去しますか？',
-    logInfo: '記録された操作：{n} 件',
+    openH: '5. 自由記述',
+    open: ['使っていて役に立ったのはどんな点ですか。具体的にお書きください。', '戸惑った点や、やりたいことの妨げになった点はありましたか。', '同じような作業をしたことがある方へ（DAW、Wwise、FMOD、その他の方法で）：ふだんはどのように行っていますか。今回と比べてどんな違いがありましたか。経験のない方は飛ばしてください。', '実際のプロジェクトで使うには、何が足りませんか。', 'そのほか、ご意見があればお書きください。'],
+    submitH: '提出', submitP: 'ダウンロードしたファイルを研究者にお送りください。ファイルには、回答、ワークステーションでの操作記録、加えた変更が含まれます。',
+    dl: '結果ファイルをダウンロード', dlAnyway: 'このままダウンロード', copy: 'テキストとしてコピー', clear: 'すべて消去', need: '先に「18 歳以上」と「自分の意思で参加」にチェックを入れてください。', missing: '未回答の項目が {n} 件あります：{list}。戻って記入するか、もう一度押すとそのままダウンロードします。',
+    done: 'ダウンロードしました。このファイルを研究者にお送りください。ご協力ありがとうございました。', copied: 'クリップボードにコピーしました。', sure: 'すべての回答を消去しますか？', logInfo: '記録された操作：{n} 件。',
   },
   en: {
-    title: 'Tasks & survey', back: '← Back to the workstation', intro: 'Thank you for taking part. The session takes about 30–40 minutes: first complete a few small tasks in the workstation, then answer the questions below. Your answers are saved automatically and survive a reload.',
-    consentH: 'About this study', consentP: 'This study examines an editing tool for composers that deals with musical transitions. We record: your answers on this page, your actions in the workstation (what you clicked and when), and the changes you made to links and notes. We do not record your name, audio or screen. You may stop at any time without giving a reason. [Researcher name, affiliation and contact: to be filled in]',
-    consent: 'I have read the information above, I take part voluntarily, and I agree to my data being used as described.', code: 'Participant code (generated automatically — please do not replace it with your name)',
-    bgH: 'About you', role: 'Your role (choose all that apply)', roles: ['Composer', 'Arranger', 'Audio / sound designer', 'Game developer', 'Student', 'Other'],
+    title: 'Tasks & survey', back: '← Back to the workstation', todo: '[TO BE FILLED IN: {x}]',
+    intro: 'Thank you for considering taking part in this study. Please read the information below first. If you agree, complete five small tasks in the workstation and then answer the survey. Your answers are saved automatically in this computer’s browser and survive a reload.',
+    consentH: 'Study information and consent',
+    c: [
+      ['Purpose', 'This study examines a software tool for composers. The tool is for editing musical transitions: where, and in what way, one piece of music leads into another in games and other interactive media. We want to learn whether it is easy to use and whether it helps with creative judgement.'],
+      ['What you will do', 'You will use the tool in your web browser to complete five small tasks and then answer a survey. This takes about 30–40 minutes. You need a computer and headphones or speakers. Please set the volume to a comfortable level before you start.'],
+      ['What we record', '(1) Your answers on this page; (2) a record of your actions in the tool: what you clicked and when; (3) the changes you made to links and notes; (4) your browser type and window size. We do not record your name, e-mail address, voice or screen.'],
+      ['Risks and compensation', 'Taking part involves no risk beyond everyday computer use. {comp}'],
+      ['Voluntary participation and withdrawal', 'Taking part is entirely voluntary. Before you submit, you may stop at any time by closing the page, without giving a reason; what you have entered stays only in your own browser and can be deleted with “Clear everything” at the bottom of the page. If you wish to withdraw after submitting, tell the researcher your participant code before the results are published and all of your data will be deleted. Declining or withdrawing has no negative consequences for you.'],
+      ['Storage and use of data', 'Data are identified only by participant code and stored on the researcher’s password-protected device. They are kept for {years} years after the study ends and then deleted. Results will be used in aggregate form in academic papers and reports; text you write may be quoted anonymously.'],
+      ['Contact', 'Researcher: {researcher} ({affiliation}){supervisor}. If you have any questions, please contact: {contact}.'],
+      ['Ethics review', '{ethics}'],
+    ],
+    storeOnline: 'When you press “Submit”, your data are sent and stored over the internet: they pass through servers of Cloudflare, Inc. and are stored in a private repository at GitHub, Inc. that only the researcher can access (both companies’ servers are located outside Japan). Data are identified only by participant code, and your IP address is not written to the file. The researcher also keeps a copy on a password-protected device; data are kept for {years} years after the study ends and then deleted from both the device and the repository. Results will be used in aggregate form in academic papers and reports; text you write may be quoted anonymously.',
+    storeServer: 'When you press “Submit”, your data are sent over an encrypted connection to a server managed by the researcher (Alibaba Cloud, Tokyo, Japan) and stored there. Data are identified only by participant code; the server does not log your IP address or write it to the file. The researcher moves the data to a password-protected device and keeps them for {years} years after the study ends, then deletes them; the copy on the server is deleted once data collection is finished. Results will be used in aggregate form in academic papers and reports; text you write may be quoted anonymously.',
+    send: 'Submit', sending: 'Submitting…', sent: 'Submitted — thank you for taking part. Your participant code is {code}; quote it to the researcher if you wish to withdraw your data. You may now close this page.', sendFail: 'Submitting did not succeed ({why}). Please press “Download result file” and send the file to the researcher.', submitP2: 'When you press “Submit”, your answers, the record of your actions in the workstation and the changes you made are sent to the researcher. If submitting fails, download the file and send it to the researcher instead.',
+    comp0: 'No compensation is offered for this study.', supervisor: '; supervisor: {x}', xResearcher: 'researcher name', xAff: 'affiliation', xContact: 'contact e-mail', xEthics: 'ethics review status',
+    age: 'I am 18 years of age or older.', consent: 'I have read and understood the information above and I take part in this study voluntarily.', quote: 'I agree that the researcher may quote text I write, anonymously, in publications. (Optional)',
+    code: 'Participant code (generated automatically. Please note it down — you need it to withdraw your data. Do not replace it with your name)',
+    bgH: '1. About you', role: 'Your role (choose all that apply)', roles: ['Composer', 'Arranger', 'Audio / sound designer', 'Game developer', 'Student', 'Other'],
     years: 'Years of composing or arranging', game: 'Experience with game music', games: ['None', 'Studied it or tried it on my own', 'Worked on real projects'],
     tools: 'Tools you have used (choose all that apply)', toolList: ['A DAW such as Cubase / Logic / Live', 'Wwise', 'FMOD', 'Other game-audio middleware', 'A game engine’s built-in audio', 'None of these'],
     fam: 'How familiar are you with music that changes in response to the player (interactive music)?', famLo: 'Not at all', famHi: 'Very familiar',
-    taskH: 'Tasks', taskP: 'Open the workstation in another tab and work through these in order. It is fine if you cannot complete one — just report what happened.',
+    listen: 'What are you listening on right now?', listens: ['Headphones / earphones', 'External speakers', 'Built-in computer speakers'],
+    taskH: '2. Tasks', taskP: 'Open the workstation in another tab (button at the top left) and work through these in order. It is fine if you cannot complete one — just report what happened. We are evaluating the tool, not you.',
     tasks: [
       ['Audition one transition', 'Find the link that goes from bar 6 of “Theme 4/4” to “Lullaby”, and audition it.'],
-      ['Compare two transitions', 'Pick two different bars in “Theme 3/4” and audition how each of them switches to “Star Dance”. Which one sounds smoother to you? Write the bar numbers and your reasons below.'],
-      ['Revise a transition', 'Pick a transition bar (bridge) that you find unconvincing, open its piano roll, and change the melody until you are satisfied. Write which one you changed and how.'],
+      ['Compare two transitions', 'Pick two different bars in “Theme 3/4” and audition how each of them switches to “Star Dance”. Which one sounds smoother to you? Write the two bar numbers and your reasons below.'],
+      ['Revise a transition', 'Pick a transition bar (bridge) that you find unconvincing, open its piano roll, and change the melody until you are satisfied. Write which one you changed, how, and why.'],
       ['Build a path', 'Build and play this path: from “Theme 4/4” move to another area’s theme, then start a battle from there.'],
       ['Change a link', 'Create a link that did not exist before and audition it; then delete it.'],
     ],
-    st: 'Outcome', sts: ['Completed', 'Partly completed', 'Could not complete'], diff: 'Difficulty', diffLo: 'Very easy', diffHi: 'Very hard', note: 'Notes (what you did, where you got stuck, your judgement)',
-    susH: 'Your impressions', susP: 'For each of the 10 statements, choose how much you agree. 1 = strongly disagree, 5 = strongly agree.',
+    st: 'Outcome', sts: ['Completed', 'Partly completed', 'Could not complete'], diff: 'Difficulty', diffLo: 'Very easy', diffHi: 'Very hard', note: 'Explanation (what you did, where you got stuck, your judgement)',
+    toolH: '3. About this tool', toolP: 'Choose how much you agree. 1 = strongly disagree, 7 = strongly agree.',
+    toolQ: ['I could see at which points a piece of music can switch to another.', 'Auditioning let me judge whether a transition was good or not.', 'I could change a transition into what I wanted.', 'It was clear to me what result my changes would have.', 'While using it, I often did not know what to do next.', 'The transitions I heard were often different from what I expected.'],
+    susH: '4. Overall impressions', susP: 'In the 10 statements below, “the system” means this tool. 1 = strongly disagree, 5 = strongly agree.',
     sus: ['I think that I would like to use this system frequently.', 'I found the system unnecessarily complex.', 'I thought the system was easy to use.', 'I think that I would need the support of a technical person to be able to use this system.', 'I found the various functions in this system were well integrated.', 'I thought there was too much inconsistency in this system.', 'I would imagine that most people would learn to use this system very quickly.', 'I found the system very cumbersome to use.', 'I felt very confident using the system.', 'I needed to learn a lot of things before I could get going with this system.'],
-    openH: 'Open questions',
-    open: ['What, if anything, was useful to you? Please be specific.', 'What confused you or got in the way of what you wanted to do?', 'How did this differ from the way you currently handle similar work?', 'What is missing before you could use it on a real project?', 'Anything else you would like to tell us.'],
+    openH: '5. Open questions',
+    open: ['What, if anything, was useful to you? Please be specific.', 'What confused you or got in the way of what you wanted to do?', 'If you have done similar work before (with a DAW, Wwise, FMOD or otherwise): how do you normally do it, and how did this differ? Skip this if you have not.', 'What is missing before you could use it on a real project?', 'Anything else you would like to tell us.'],
     submitH: 'Submit', submitP: 'After downloading, please send the file to the researcher. It contains your answers, the record of your actions in the workstation, and the changes you made.',
-    dl: 'Download result file', copy: 'Copy as text', clear: 'Clear everything', need: 'Please tick the consent box first.', done: 'Downloaded. Please send this file to the researcher. Thank you.', copied: 'Copied to the clipboard.', sure: 'Clear all answers?',
-    logInfo: 'Recorded actions: {n}',
+    dl: 'Download result file', dlAnyway: 'Download anyway', copy: 'Copy as text', clear: 'Clear everything', need: 'Please tick “18 or older” and “I take part voluntarily” first.', missing: '{n} item(s) are still unanswered: {list}. You can go back and fill them in, or press again to download as is.',
+    done: 'Downloaded. Please send this file to the researcher. Thank you for taking part.', copied: 'Copied to the clipboard.', sure: 'Clear all answers?', logInfo: 'Recorded actions: {n}.',
   },
 };
 const LANGS = ['zh', 'ja', 'en'];
 let lang = new URLSearchParams(location.search).get('lang') || (() => { try { return localStorage.getItem('seam.lang'); } catch { return null; } })() || 'zh';
 if (!LANGS.includes(lang)) lang = 'zh';
-let A = {}; try { A = JSON.parse(localStorage.getItem('seam.survey.v2') || '{}'); } catch {}
+let A = {}; try { A = JSON.parse(localStorage.getItem('seam.survey.v3') || '{}'); } catch {}
 if (!A.code) A.code = 'P-' + Math.random().toString(36).slice(2, 8).toUpperCase();
 if (!A.started) A.started = new Date().toISOString();
-const saveA = () => { try { localStorage.setItem('seam.survey.v2', JSON.stringify(A)); } catch {} };
+const saveA = () => { try { localStorage.setItem('seam.survey.v3', JSON.stringify(A)); } catch {} };
 const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const k in attrs) { if (k === 'text') e.textContent = attrs[k]; else if (k.startsWith('on')) e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); } e.append(...kids.flat().filter(Boolean)); return e; };
 
 function text(key, rows) { const t = el('textarea', { oninput: e => { A[key] = e.target.value; saveA(); } }); t.value = A[key] || ''; if (rows) t.style.minHeight = rows * 22 + 'px'; return t; }
@@ -141,46 +214,81 @@ function radios(key, opts) { return el('div', { class: 'opts' }, opts.map((o, i)
 function checks(key, opts) { A[key] = A[key] || []; return el('div', { class: 'opts' }, opts.map((o, i) => { const inp = el('input', { type: 'checkbox', onchange: e => { const s = new Set(A[key]); e.target.checked ? s.add(i) : s.delete(i); A[key] = [...s].sort(); saveA(); } }); inp.checked = A[key].includes(i); return el('label', {}, inp, el('span', { text: o })); })); }
 function scale(key, n, lo, hi) { return el('div', { class: 'scale' }, el('span', { text: lo }), el('div', { class: 'opts' }, Array.from({ length: n }, (_, i) => { const inp = el('input', { type: 'radio', name: key, onchange: () => { A[key] = i + 1; saveA(); } }); inp.checked = A[key] === i + 1; return el('label', {}, inp, el('span', { text: i + 1 })); })), el('span', { text: hi })); }
 const q = (num, label, ...body) => el('div', { class: 'q' }, el('div', { class: 'lab' }, num ? el('span', { class: 'num', text: num }) : null, label), ...body);
+const box = (key, label) => { const inp = el('input', { type: 'checkbox', onchange: e => { A[key] = e.target.checked; saveA(); } }); inp.checked = !!A[key]; return el('div', { class: 'q' }, el('label', { class: 'check', style: 'color:var(--text);align-items:flex-start' }, inp, el('span', { text: label }))); };
 
+function consentText(t) {
+  const todo = x => t.todo.replace('{x}', x);
+  const v = {
+    comp: STUDY.compensation[lang] || t.comp0, years: STUDY.retentionYears,
+    researcher: STUDY.researcher || todo(t.xResearcher), affiliation: STUDY.affiliation || todo(t.xAff), contact: STUDY.contact || todo(t.xContact),
+    supervisor: STUDY.supervisor ? t.supervisor.replace('{x}', STUDY.supervisor) : '', ethics: STUDY.ethics[lang] || todo(t.xEthics),
+  };
+  return t.c.map(([h, p], i) => [h, i === 5 && STUDY.submitUrl ? (STUDY.storage === 'github' ? t.storeOnline : t.storeServer) : p]).map(([h, p]) => el('div', { class: 'q' }, el('div', { class: 'lab', style: 'font-weight:600;margin-bottom:4px', text: h }), el('div', { style: 'color:#cfd3da;line-height:1.65', text: p.replace(/\{(\w+)\}/g, (_, k) => v[k]) })));
+}
+function missingItems() {
+  const m = [], need = (k, label) => { const x = A[k]; if (x === undefined || x === '' || (Array.isArray(x) && !x.length)) m.push(label); };
+  need('role', 'A1'); need('years', 'A2'); need('game', 'A3'); need('tools', 'A4'); need('fam', 'A5'); need('listen', 'A6');
+  for (let i = 1; i <= 5; i++) { need(`t${i}_st`, `T${i}`); need(`t${i}_diff`, `T${i}`); }
+  for (let i = 1; i <= 6; i++) need('tool' + i, 'Q' + i);
+  for (let i = 1; i <= 10; i++) need('sus' + i, 'S' + i);
+  return [...new Set(m)];
+}
+let warned = false;
 function render() {
   const t = L[lang]; document.documentElement.lang = lang; document.title = 'SeamStation · ' + t.title;
   document.querySelector('#ttl').textContent = t.title;
-  const back = document.querySelector('#back'); back.textContent = t.back; back.href = 'index.html';
+  const back = document.querySelector('#back'); back.textContent = t.back; back.href = 'index.html'; back.target = 'seamstation';
   const lb = document.querySelector('#langs'); lb.innerHTML = '';
   for (const l of LANGS) lb.append(el('button', { class: l === lang ? 'on' : '', text: { zh: '中', ja: '日', en: 'EN' }[l], onclick: () => { lang = l; try { localStorage.setItem('seam.lang', l); } catch {} render(); } }));
   const root = document.querySelector('#root'); root.innerHTML = '';
   let nLog = 0; try { nLog = JSON.parse(localStorage.getItem('seam.log.v1') || '[]').length; } catch {}
-  const consent = el('input', { type: 'checkbox', onchange: e => { A.consent = e.target.checked; saveA(); } }); consent.checked = !!A.consent;
   const code = el('input', { type: 'text', oninput: e => { A.code = e.target.value; saveA(); } }); code.value = A.code;
   const years = el('input', { type: 'number', min: 0, max: 80, oninput: e => { A.years = e.target.value; saveA(); } }); years.value = A.years || ''; years.style.width = '120px';
   const msg = el('div', { id: 'done', class: 'warn' });
+  const dl = el('button', { class: 'primary', text: t.dl, onclick: () => {
+    if (!A.age || !A.consent) { msg.textContent = t.need; return; }
+    const m = missingItems();
+    if (m.length && !warned) { warned = true; msg.textContent = t.missing.replace('{n}', m.length).replace('{list}', m.join(', ')); dl.textContent = t.dlAnyway; return; }
+    download(); msg.textContent = t.done;
+  } });
+  const ready = () => { if (!A.age || !A.consent) { msg.textContent = t.need; return false; } const m = missingItems(); if (m.length && !warned) { warned = true; msg.textContent = t.missing.replace('{n}', m.length).replace('{list}', m.join(', ')); return false; } return true; };
+  const sendBtn = STUDY.submitUrl ? el('button', { class: 'primary', text: t.send, onclick: async () => {
+    if (!ready()) return;
+    sendBtn.disabled = true; sendBtn.textContent = t.sending; msg.textContent = '';
+    try {
+      const r = await fetch(STUDY.submitUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload()) });
+      const o = await r.json().catch(() => ({}));
+      if (!r.ok || !o.ok) throw new Error(o.error || 'HTTP ' + r.status);
+      A.submittedAt = new Date().toISOString(); saveA(); msg.textContent = t.sent.replace('{code}', A.code);
+    } catch (e) { msg.textContent = t.sendFail.replace('{why}', e.message || 'network'); }
+    sendBtn.disabled = false; sendBtn.textContent = t.send;
+  } }) : null;
+  if (sendBtn) dl.className = '';
   root.append(
     el('h1', { text: t.title }), el('p', { class: 'dim', text: t.intro }),
-    el('section', {}, el('h2', { text: t.consentH }), el('p', { class: 'dim', text: t.consentP }),
-      el('div', { class: 'q' }, el('label', { class: 'check', style: 'color:var(--text);align-items:flex-start' }, consent, el('span', { text: t.consent }))),
-      q('', t.code, code)),
+    el('section', {}, el('h2', { text: t.consentH }), consentText(t), box('age', t.age), box('consent', t.consent), box('quote', t.quote), q('', t.code, code)),
     el('section', {}, el('h2', { text: t.bgH }),
-      q('A1', t.role, checks('role', t.roles)), q('A2', t.years, years), q('A3', t.game, radios('game', t.games)), q('A4', t.tools, checks('tools', t.toolList)), q('A5', t.fam, scale('fam', 7, t.famLo, t.famHi))),
+      q('A1', t.role, checks('role', t.roles)), q('A2', t.years, years), q('A3', t.game, radios('game', t.games)), q('A4', t.tools, checks('tools', t.toolList)), q('A5', t.fam, scale('fam', 7, t.famLo, t.famHi)), q('A6', t.listen, radios('listen', t.listens))),
     el('section', {}, el('h2', { text: t.taskH }), el('p', { class: 'dim', text: t.taskP }),
       t.tasks.map((tk, i) => el('div', { class: 'task' }, el('h3', { text: `T${i + 1}  ${tk[0]}` }), el('p', { text: tk[1] }),
         el('div', { class: 'row' }, el('span', { class: 'dim', text: t.st }), radios('t' + (i + 1) + '_st', t.sts)),
         el('div', { class: 'row' }, el('span', { class: 'dim', text: t.diff }), scale('t' + (i + 1) + '_diff', 7, t.diffLo, t.diffHi)),
         (() => { const x = text('t' + (i + 1) + '_note', 2); x.placeholder = t.note; return x; })()))),
+    el('section', {}, el('h2', { text: t.toolH }), el('p', { class: 'dim', text: t.toolP }), t.toolQ.map((s, i) => q('Q' + (i + 1), s, scale('tool' + (i + 1), 7, '1', '7')))),
     el('section', {}, el('h2', { text: t.susH }), el('p', { class: 'dim', text: t.susP }), t.sus.map((s, i) => q('S' + (i + 1), s, scale('sus' + (i + 1), 5, '1', '5')))),
     el('section', {}, el('h2', { text: t.openH }), t.open.map((s, i) => q('F' + (i + 1), s, text('open' + (i + 1))))),
-    el('section', {}, el('h2', { text: t.submitH }), el('p', { class: 'dim', text: t.submitP + ' ' + t.logInfo.replace('{n}', nLog) }),
-      el('div', { class: 'actions' },
-        el('button', { class: 'primary', text: t.dl, onclick: () => { if (!A.consent) { msg.textContent = t.need; return; } download(); msg.textContent = t.done; } }),
-        el('button', { text: t.copy, onclick: async () => { if (!A.consent) { msg.textContent = t.need; return; } await navigator.clipboard.writeText(JSON.stringify(payload(false), null, 1)); msg.textContent = t.copied; } }),
+    el('section', {}, el('h2', { text: t.submitH }), el('p', { class: 'dim', text: (STUDY.submitUrl ? t.submitP2 : t.submitP) + ' ' + t.logInfo.replace('{n}', nLog) }),
+      el('div', { class: 'actions' }, sendBtn, dl,
+        el('button', { text: t.copy, onclick: async () => { if (!A.age || !A.consent) { msg.textContent = t.need; return; } await navigator.clipboard.writeText(JSON.stringify(payload(false), null, 1)); msg.textContent = t.copied; } }),
         el('span', { class: 'spacer' }),
-        el('button', { text: t.clear, onclick: () => { if (confirm(t.sure)) { const c = A.code; A = { code: c, started: new Date().toISOString() }; saveA(); render(); } } })),
+        el('button', { text: t.clear, onclick: () => { if (confirm(t.sure)) { A = { code: 'P-' + Math.random().toString(36).slice(2, 8).toUpperCase(), started: new Date().toISOString() }; saveA(); warned = false; render(); scrollTo(0, 0); } } })),
       msg));
 }
 function payload(full = true) {
-  let log = [], edits = null; try { log = JSON.parse(localStorage.getItem('seam.log.v1') || '[]'); edits = JSON.parse(localStorage.getItem('seam.edits.v1') || 'null'); } catch {}
+  let log = [], edits = null, posn = null; try { log = JSON.parse(localStorage.getItem('seam.log.v1') || '[]'); edits = JSON.parse(localStorage.getItem('seam.edits.v1') || 'null'); posn = JSON.parse(localStorage.getItem('seam.pos.v1') || 'null'); } catch {}
   const sus = Array.from({ length: 10 }, (_, i) => A['sus' + (i + 1)]);
   const susScore = sus.every(Number.isFinite) ? sus.reduce((s, v, i) => s + (i % 2 === 0 ? v - 1 : 5 - v), 0) * 2.5 : null;
-  return { format: 'seamstation-survey-2', lang, submitted: new Date().toISOString(), answers: A, susScore, userAgent: navigator.userAgent, log: full ? log : `(${log.length})`, edits: full ? edits : (edits ? '(included in file)' : null) };
+  return { format: 'seamstation-survey-3', lang, submitted: new Date().toISOString(), answers: A, susScore, userAgent: navigator.userAgent, window: [innerWidth, innerHeight], log: full ? log : `(${log.length})`, edits: full ? edits : (edits ? '(in file)' : null), layout: full ? posn : null };
 }
 function download() {
   const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(payload())], { type: 'application/json' })), download: `seamstation_${A.code}.json` });
